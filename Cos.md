@@ -30,6 +30,20 @@ foo();
 add(1, 2);
 ```
 
+### 类型
+
+```js
+var f: fn (a: int, int) -> int;
+```
+
+### 尾块函数
+
+跟在表达式后面的块是尾块函数
+
+```js
+val a = foo { };
+```
+
 ## 基础类型
 
 ### 逻辑
@@ -123,9 +137,13 @@ def Foo data {
   fn add(b: int) -> int {
     a + b
   }
+
+  fn val() -> int { a }
 }
 var a: Foo = Foo(1);
 a.add(2); // 3
+
+a.val; // 1, 没有参数的函数可以省略括号
 ```
 
 ### 接口定义
@@ -141,5 +159,19 @@ def Foo kind {
 def Bar data(a: int) : Foo {
   a: int = a;
   fn add(b: int) -> int { a + b }
+}
+```
+
+## 泛型
+
+```js
+fn id[T](v: T) -> T { v }
+
+def Functor[F: for[_]] kind {
+  fn map[T, R](a: F[T], f: fn (T) -> R) -> F[R];
+}
+
+def Functor[T] kind : for[T] {
+  fn map[R](f: fn (T) -> R) -> Me[R];
 }
 ```
