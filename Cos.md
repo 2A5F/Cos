@@ -113,3 +113,17 @@ def Foo = {
 ```js
 def Foo = Bar;
 ```
+
+### 结构定义
+
+```js
+def Foo data {
+  a: int;
+  
+  Me(a: int) {
+    let me.a = a;
+  }
+}
+var a: Foo = Foo(1);
+```
+
