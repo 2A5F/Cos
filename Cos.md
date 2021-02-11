@@ -120,10 +120,15 @@ def Foo = Bar;
 def Foo data {
   a: int;
   
-  Me(a: int) {
+  fn Me(a: int) {
     let me.a = a;
+  }
+
+  fn add(b: int) -> int {
+    a + b
   }
 }
 var a: Foo = Foo(1);
+a.add(2); // 3
 ```
 
