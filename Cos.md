@@ -99,18 +99,14 @@ var n: !;
 
 ## 定义
 
-### 接口定义
+### 别名定义
 
 ```js
 def Foo = {
   a: int,
   b: num,
 };
-```
 
-### 别名定义
-
-```js
 def Foo = Bar;
 ```
 
@@ -132,3 +128,18 @@ var a: Foo = Foo(1);
 a.add(2); // 3
 ```
 
+### 接口定义
+
+使用结构类型，无需显式标志实现接口
+
+```js
+def Foo kind {
+  a: int;
+  fn add(b: int) -> int;
+}
+
+def Bar data(a: int) : Foo {
+  a: int = a;
+  fn add(b: int) -> int { a + b }
+}
+```
