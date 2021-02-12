@@ -162,6 +162,22 @@ def Bar data(a: int) : Foo {
 }
 ```
 
+### 枚举定义
+
+```js
+def Foo enum {
+  A, B, C
+}
+def Bar enum {
+  A(int),
+  B { a: int },
+  C data { a: int },
+  D enum { A };
+  
+  fn some() {}
+}
+```
+
 ## 泛型
 
 ```js
@@ -173,5 +189,10 @@ def Functor[F: for[_]] kind {
 
 def Functor[T] kind : for[T] {
   fn map[R](f: fn (T) -> R) -> Me[R];
+}
+
+def Option[T] enum {
+  Some(T),
+  None,
 }
 ```
