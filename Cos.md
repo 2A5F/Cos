@@ -55,6 +55,35 @@ with 可以在同级作用域下尾随语句
 do { } with do { }
 ```
 
+## For
+
+```js
+for { }
+for true { }
+for i in e { }
+
+for { } with { }
+```
+
+### Try Throw Catch Finally
+
+调用含有 throw 的函数必须使用 try
+
+```js
+fn some() { throw a }
+try some();
+```
+
+在 try 同级块内任何位置使用 catch
+
+```js
+try some();
+catch e : Foo { }
+catch e : Bar { }
+catch e { }
+catch { }
+```
+
 ## 函数
 
 ### 定义
