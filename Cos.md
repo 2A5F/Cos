@@ -326,3 +326,50 @@ def Option[T] enum {
   None,
 }
 ```
+
+## 模块
+
+一个文件就是一个模块
+
+```ocaml
+module foo { 
+  module bar { }
+}
+```
+
+模块可以标注实现接口
+
+在文件头使用不带名字的 module 来指示文件实现的接口，文件模块标注应该在所有其他东西之前
+
+```ocaml
+module : bar;
+module foo: bar { }
+```
+
+### 导入
+
+```js
+import a.b.c; // 导入模块内所有内容
+import a.b.c as foo; // 创建一个模块别名
+import a.b.c of { Foo, bar as Bar }; // 从模块中导入部分内容
+import _.a.b.c; // 开头为 _ 表示当前根目录
+```
+
+### 导出
+
+默认模块内所有函数和定义都会导出，使用 private 来隐藏
+
+使用 export 重新导出某个模块
+
+```js
+export a.b.c; // 重新导出模块内所有内容
+export a.b.c as foo; // 将目标模块以 foo 为名字的子模块导出
+export a.b.c of { Foo, bar as Bar }; // 导出模块内部分内容
+export _.a.b.c; // 开头为 _ 表示当前根目录
+```
+
+使用 export 导出一个变量
+
+```js
+export var a = 1;
+```
