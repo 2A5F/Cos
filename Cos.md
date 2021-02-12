@@ -14,6 +14,47 @@ let a = 2;
 let a + 1;
 ```
 
+## 控制流
+
+### If
+
+```js
+if a { b }
+if a { b } else { c }
+if a { b } else if c { d }
+if a do b;
+if a do b else c;
+
+if a else { b }
+if a else b;
+```
+
+### Case
+
+```js
+case a;
+of b { c }
+of d do e;
+else { f }
+```
+
+### Do
+
+do 块在如 if 的条件内使用时必须包在括号内
+
+```js
+do { }
+var a = do { }
+```
+
+### With
+
+with 可以在同级作用域下尾随语句
+
+```js
+do { } with do { }
+```
+
 ## 函数
 
 ### 定义
