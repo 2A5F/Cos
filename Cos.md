@@ -223,7 +223,7 @@ var a: [int] = [1, 2, 3];
 var t: (int, bool, str) = (1, true, 'asd');
 ```
 
-#### 单元类型
+### 单元类型
 
 ```js
 var u: () = ();
