@@ -2,14 +2,14 @@
 
 ### 定义
 
-```js
+```ts
 var a = 1;
 var b: int;
 ```
 
 ### 修改
 
-```js
+```ts
 let a = 2;
 let a + 1;
 ```
@@ -18,7 +18,7 @@ let a + 1;
 
 ### If
 
-```js
+```scala
 if a { b }
 if a { b } else { c }
 if a { b } else if c { d }
@@ -31,18 +31,30 @@ if a else b;
 
 ### Case
 
-```js
+平铺 case
+
+```haskell
 case a;
 of b { c }
 of d do e;
 else { f }
 ```
 
+case 块
+
+```haskell
+case a {
+  of b { c }
+  of d do e;
+  else { f }
+}
+```
+
 ### Do
 
 do 块在如 if 的条件内使用时必须包在括号内
 
-```js
+```scala
 do { }
 var a = do { }
 ```
@@ -51,37 +63,85 @@ var a = do { }
 
 with 可以在同级作用域下尾随语句
 
-```js
+```scala
 do { } with do { }
 ```
 
-## For
+### For
 
-```js
+```scala
 for { }
 for true { }
-for i in e { }
+for e of i { }
 
-for { } with { }
+for { } with { } // for with 尾随的作用域是每次循环结束后
+```
+
+#### 使用 with 模拟三元 for
+
+```scala
+do { var a = 1 } with
+for a < len { 
+
+} with { let a + 1 }
+```
+
+### Break Continue Return
+
+```js
+break;
+break a;
+continue;
+return;
+return a;
+```
+
+带标签情况
+
+```kotlin
+do@l {
+  break@l;
+}
+for@l true { 
+  continue@l;
+}
+fn@l some() {
+  return@l;
+}
 ```
 
 ### Try Throw Catch Finally
 
 调用含有 throw 的函数必须使用 try
 
-```js
+```scala
 fn some() { throw a }
 try some();
 ```
 
 在 try 同级块内任何位置使用 catch
 
-```js
+```scala
 try some();
 catch e : Foo { }
 catch e : Bar { }
 catch e { }
 catch { }
+```
+
+在任意块内使用 finally， finally 块将按倒序在主体块结束后顺序执行  
+
+```c#
+finally { }
+```
+
+#### 使用 with 模拟其他语言的 try catch finally
+
+```scala
+do { try some() } 
+with catch e { }
+with catch { }
+with finally { }
 ```
 
 ## 函数
@@ -108,10 +168,10 @@ var f: fn (a: int, int) -> int;
 
 ### 尾块函数
 
-跟在表达式后面的块是尾块函数
+跟在表达式后面的块是尾块函数，要求表达式的类型是输入一个函数的函数
 
 ```js
-val a = foo { };
+var a = foo { };
 ```
 
 ## 基础类型
@@ -185,7 +245,7 @@ var n: !;
 
 ### 别名定义
 
-```js
+```scala
 def Foo = {
   a: int,
   b: num,
@@ -196,7 +256,7 @@ def Foo = Bar;
 
 ### 结构定义
 
-```js
+```scala
 def Foo data {
   a: int;
   
@@ -220,7 +280,7 @@ a.val; // 1, 没有参数的函数可以省略括号
 
 使用结构类型，无需显式标志实现接口
 
-```js
+```scala
 def Foo kind {
   a: int;
   fn add(b: int) -> int;
@@ -234,7 +294,7 @@ def Bar data(a: int) : Foo {
 
 ### 枚举定义
 
-```js
+```scala
 def Foo enum {
   A, B, C
 }
@@ -250,7 +310,7 @@ def Bar enum {
 
 ## 泛型
 
-```js
+```scala
 fn id[T](v: T) -> T { v }
 
 def Functor[F: for[_]] kind {
