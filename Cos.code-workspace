@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"name": ".",
+			"path": "."
+		},
+		{
+			"name": "Cos",
+			"path": "dotnet\\Cos"
+		}
+	],
+	"settings": {}
+}
