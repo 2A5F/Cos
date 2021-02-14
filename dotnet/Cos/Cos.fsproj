@@ -12,6 +12,7 @@
     <Compile Include="Scanner\KeyWord.fs" />
     <Compile Include="Scanner\Token.fs" />
     <Compile Include="Scanner\Errors.fs" />
+    <Compile Include="Scanner\Scanner.fs" />
     <Compile Include="Library.fs" />
   </ItemGroup>
 </Project>
