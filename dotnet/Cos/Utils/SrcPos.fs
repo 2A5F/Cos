@@ -6,61 +6,61 @@ open Volight.Cos.Utils
 
 [<Struct; IsReadOnly; DebuggerDisplay(@"Pos \{ {ToString(),nq} \}")>]
 type Pos = 
-    { line: uint; column: uint }
-    override self.ToString() = $"{self.line}:{self.column}"
-    member inline self.pos = self
-    static member inline ofv line column = { line = line; column = column }
-    static member zero = Pos.ofv 0u 0u
+    { Line: uint; Column: uint }
+    override self.ToString() = $"{self.Line}:{self.Column}"
+    member inline self.Pos = self
+    static member inline OfV line column = { Line = line; Column = column }
+    static member zero = Pos.OfV 0u 0u
 
 [<Struct; IsReadOnly; DebuggerDisplay(@"Loc \{ {ToString(),nq} \}")>]
 type Loc = 
-    { from: Pos; ``to``: Pos }
-    override self.ToString() = $"{self.from.line}:{self.from.column} .. {self.``to``.line}:{self.``to``.column}"
-    member inline self.loc = self
-    static member inline ofp from ``to`` = { from = from; ``to`` = ``to`` }
-    static member inline ofv fl fc tl tc = { from = Pos.ofv fl fc; ``to`` = Pos.ofv tl tc }
-    static member inline ofmp< ^a, ^b, ^c when ^a : (member loc: Loc) and ^b : (member loc: Loc) and ^c : (member loc: Loc)> (f: ^a Maybe) (t: ^b Maybe) (e: ^c)  = 
+    { From: Pos; To: Pos }
+    override self.ToString() = $"{self.From.Line}:{self.From.Column} .. {self.To.Line}:{self.To.Column}"
+    member inline self.Loc = self
+    static member inline OfP from To = { From = from; To = To }
+    static member inline OfV fl fc tl tc = { From = Pos.OfV fl fc; To = Pos.OfV tl tc }
+    static member inline OfMP< ^a, ^b, ^c when ^a : (member Loc: Loc) and ^b : (member Loc: Loc) and ^c : (member Loc: Loc)> (f: ^a Maybe) (t: ^b Maybe) (e: ^c)  = 
         match f with
         | Just f ->
             match t with
-            | Just t -> Loc.ofp (^a : (member loc: Loc) f).from (^b : (member loc: Loc) t).``to``
-            | Nil -> Loc.ofp (^a : (member loc: Loc) f).from (^c : (member loc: Loc) e).``to``
+            | Just t -> Loc.OfP (^a : (member Loc: Loc) f).From (^b : (member Loc: Loc) t).To
+            | Nil -> Loc.OfP (^a : (member Loc: Loc) f).From (^c : (member Loc: Loc) e).To
         | Nil -> 
             match t with
-            | Just t -> Loc.ofp (^c : (member loc: Loc) e).from (^b : (member loc: Loc) t).``to``
-            | Nil -> (^c : (member loc: Loc) e)
-    static member zero = Loc.ofp Pos.zero Pos.zero
-    member inline self.merge (other: Loc) = Loc.ofp self.from other.``to``
-    static member inline may< ^a when ^a : (member loc: Loc)> (m: ^a Maybe) d = 
+            | Just t -> Loc.OfP (^c : (member Loc: Loc) e).From (^b : (member Loc: Loc) t).To
+            | Nil -> (^c : (member Loc: Loc) e)
+    static member zero = Loc.OfP Pos.zero Pos.zero
+    member inline self.Merge (other: Loc) = Loc.OfP self.From other.To
+    static member inline May< ^a when ^a : (member Loc: Loc)> (m: ^a Maybe) d = 
         match m with
-        | Just v -> (^a : (member loc: Loc) v)
+        | Just v -> (^a : (member Loc: Loc) v)
         | Nil -> d
-    member inline self.mayMerge< ^a when ^a : (member loc: Loc)> (m: ^a Maybe) =
+    member inline self.MayMerge< ^a when ^a : (member Loc: Loc)> (m: ^a Maybe) =
         match m with
-        | Just v -> self.merge (^a : (member loc: Loc) v)
+        | Just v -> self.Merge (^a : (member Loc: Loc) v)
         | Nil -> self
 
 [<Struct; IsReadOnly; DebuggerDisplay(@"CodeRange \{ {ToString(),nq} \}")>]
 type CodeRange =
-    { from: int; ``to``: int }
-    member self.len = self.``to`` - self.from
-    override self.ToString() = $"{self.from}..{self.``to``}"
-    static member inline New (from, ``to``) = { from = from; ``to`` = ``to`` }
+    { From: int; To: int }
+    member self.Len = self.To - self.From
+    override self.ToString() = $"{self.From}..{self.To}"
+    static member inline New (from, To) = { From = from; To = To }
 
-    member inline self.slice() = self
-    member self.slice(start) = CodeRange.New(self.from + start, self.``to``)
-    member self.slice(start, ``end``) = CodeRange.New(self.from + start, self.from + ``end``)
-    member self.sliceTo(``end``) = CodeRange.New(self.from, self.from + ``end``)
+    member inline self.Slice() = self
+    member self.Slice(start) = CodeRange.New(self.From + start, self.To)
+    member self.Slice(start, _end) = CodeRange.New(self.From + start, self.From + _end)
+    member self.SliceTo(_end) = CodeRange.New(self.From, self.From + _end)
     
-    member self.GetSlice(start, ``end``) = 
+    member self.GetSlice(start, _end) = 
         match start with
         | None -> 
-            match ``end`` with
-            | None -> self.slice()
-            | Some e -> self.sliceTo(e)
+            match _end with
+            | None -> self.Slice()
+            | Some e -> self.SliceTo(e)
         | Some s -> 
-            match ``end`` with
-            | None -> self.slice(s)
-            | Some e -> self.slice(s, e)
+            match _end with
+            | None -> self.Slice(s)
+            | Some e -> self.Slice(s, e)
 
-    static member inline ofv from ``to`` = { from = from; ``to`` = ``to`` }
+    static member inline OfV from To = { From = from; To = To }

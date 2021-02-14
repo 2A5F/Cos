@@ -1,9 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
   </PropertyGroup>
-
   <ItemGroup>
     <Compile Include="Utils\Maybe.fs" />
     <Compile Include="Utils\SrcPos.fs" />
@@ -12,7 +10,8 @@
     <Compile Include="Utils\SubStr.fs" />
     <Compile Include="Scanner\Reader.fs" />
     <Compile Include="Scanner\KeyWord.fs" />
+    <Compile Include="Scanner\Token.fs" />
+    <Compile Include="Scanner\Errors.fs" />
     <Compile Include="Library.fs" />
   </ItemGroup>
-
 </Project>

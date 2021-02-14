@@ -9,7 +9,7 @@ let read (code: 'a) =
     seq {
         yield! seq { 
             for c in code do
-            yield { line = line; column = column }
+            yield { Line = line; Column = column }
             match c with
             | '\r' ->
                 line <- line + 1u;
@@ -24,6 +24,6 @@ let read (code: 'a) =
                 column <- column + 1u;
                 r <- false;
         }
-        yield { line = line; column = column }
+        yield { Line = line; Column = column }
     }
     
