@@ -1,4 +1,4 @@
-module rec Volight.Cos.Parser.Scanner
+module Volight.Cos.Parser.Scanner
 
 open System
 open System.Collections.Generic
@@ -25,7 +25,7 @@ type internal Ctx =
 
 let inline internal isSpace c = Char.IsWhiteSpace c
 
-let internal spaceBody (ctx: Ctx) (code: Code) i =
+let rec internal spaceBody (ctx: Ctx) (code: Code) i =
     match code.[i] with
     | Just c when isSpace c -> spaceBody ctx code (i + 1)
     | _ ->
@@ -41,7 +41,7 @@ let internal space (ctx: Ctx) (code: Code) =
 let inline internal isIdFirst c = match c with '_' | '$' -> true | _ -> Char.IsLetter c
 let inline internal isIdBody c = match c with '_' | '$' -> true | _ -> Char.IsLetterOrDigit c
 
-let internal idBody (ctx: Ctx) (code: Code) i =
+let rec internal idBody (ctx: Ctx) (code: Code) i =
     match code.[i] with
     | Just c when isIdBody c -> idBody ctx code (i + 1)
     | _ ->
@@ -85,7 +85,7 @@ let inline internal isOper c =
     | '!' | '%' | '+' | '-' | '*' | '/' | '^' | '|' | '&' | '>' | '<' | '.' | '=' | '?' | ':' -> true 
     | _ -> false
 
-let internal operBody (ctx: Ctx) (code: Code) i =
+let rec internal operBody (ctx: Ctx) (code: Code) i =
     match code.[i] with
     | Just c when isOper c -> operBody ctx code (i + 1)
     | _ ->
@@ -131,7 +131,7 @@ let inline internal numFinish (ctx: Ctx) (code: Code) prefix suffxi dot f e i il
         ctx.tokens.Add(Num num)
     Just <| code.CodeRangeFrom i
 
-let internal numSuffix (ctx: Ctx) (code: Code) prefix dot f e i illegal =
+let rec internal numSuffix (ctx: Ctx) (code: Code) prefix dot f e i illegal =
     match code.[i] with
     | Just c when isIdBody c -> numSuffix ctx code prefix dot f e (i + 1) illegal
     | _ ->
@@ -141,7 +141,7 @@ let internal numSuffix (ctx: Ctx) (code: Code) prefix dot f e i illegal =
         let tk = Token.New(str, loc)
         numFinish ctx code prefix (Just tk) dot f e i illegal
 
-let internal numBodyBinary (ctx: Ctx) (code: Code) prefix f i first illegal =
+let rec internal numBodyBinary (ctx: Ctx) (code: Code) prefix f i first illegal =
     match code.[i] with
     | Just '.' -> numBodyBinary ctx code prefix f (i + 1) false true
     | Just c when isNumBinaryBody c -> numBodyBinary ctx code prefix f (i + 1) false illegal
@@ -151,7 +151,7 @@ let internal numBodyBinary (ctx: Ctx) (code: Code) prefix f i first illegal =
     if first then ctx.errs.Add(UnknownSymbol ctx.pos.[code.RawIndex i])
     numFinish ctx code (Just prefix) Nil false f i i illegal
 
-let internal numBodyHex (ctx: Ctx) (code: Code) prefix f i first illegal =
+let rec internal numBodyHex (ctx: Ctx) (code: Code) prefix f i first illegal =
     match code.[i] with
     | Just '.' -> numBodyHex ctx code prefix f (i + 1) false true
     | Just c when isNumHexBody c -> numBodyHex ctx code prefix f (i + 1) false illegal
@@ -160,13 +160,13 @@ let internal numBodyHex (ctx: Ctx) (code: Code) prefix f i first illegal =
     if first then ()
     numFinish ctx code (Just prefix) Nil false f i i illegal
 
-let internal numBodyDecimal (ctx: Ctx) (code: Code) i =
+let rec internal numBodyDecimal (ctx: Ctx) (code: Code) i =
     match code.[i] with
     | Just c when isNumBody c -> numBodyDecimal ctx code (i + 1)
     | Just c when isIdFirst c -> numSuffix ctx code Nil true 0 i (i + 1) false
     | _ -> numFinish ctx code Nil Nil true 0 i i false
 
-let internal numBody (ctx: Ctx) (code: Code) i =
+let rec internal numBody (ctx: Ctx) (code: Code) i =
     match code.[i] with
     | Just '.' -> numBodyDecimal ctx code (i + 1)
     | Just c when isNumBody c -> numBody ctx code (i + 1)
@@ -215,7 +215,7 @@ let internal escapeDigit (ctx: Ctx) (code: Code) i =
                 ctx.errs.Add(IllegalEscape(loc, Digit))
                 struct (i + 3, Nil)
             else
-                struct (i + 3, Just <| Operators.char c)
+                struct (i + 3, Just <| char c)
         | _ ->
             let loc = ctx.Loc <| code.CodeRange(i, i + 2)
             ctx.errs.Add(IllegalEscape(loc, Digit))
@@ -238,7 +238,7 @@ let internal escapeHex (ctx: Ctx) (code: Code) i =
                 ctx.errs.Add(IllegalEscape(loc, Hex))
                 struct (i + 3, Nil)
             else
-                struct (i + 3, Just <| Operators.char c)
+                struct (i + 3, Just <| char c)
         | _ ->
             let loc = ctx.Loc <| code.CodeRange(i, i + 1)
             ctx.errs.Add(IllegalEscape(loc, Hex))
@@ -248,7 +248,7 @@ let internal escapeHex (ctx: Ctx) (code: Code) i =
         ctx.errs.Add(IllegalEscape(loc, Hex))
         struct (i + 1, Nil)
 
-let internal escapeUnicode (ctx: Ctx) (code: Code) f i =
+let rec internal escapeUnicode (ctx: Ctx) (code: Code) f i =
     match code.[i] with
     | Just c when isHex c ->
         if i - f < 4 then escapeUnicode ctx code f (i + 1) else
@@ -260,13 +260,13 @@ let internal escapeUnicode (ctx: Ctx) (code: Code) f i =
             ctx.errs.Add(IllegalEscape(loc, Unicode))
             struct (i + 1, Nil)
         else
-            struct (i + 1, Just <| Operators.char c)
+            struct (i + 1, Just <| char c)
     | _ ->
         let loc = ctx.Loc <| code.CodeRange(f, i)
         ctx.errs.Add(IllegalEscape(loc, Unicode))
         struct (i + 1, Nil)
 
-let internal escapeBigUnicode (ctx: Ctx) (code: Code) f i =
+let rec internal escapeBigUnicode (ctx: Ctx) (code: Code) f i =
     match code.[i] with
     | Just c when isHex c ->
         if i - f < 6 then escapeBigUnicode ctx code f (i + 1) else
@@ -373,7 +373,7 @@ let internal char (ctx: Ctx) (code: Code) =
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-let inline internal blockItem (ctx: Ctx) (code: Code) =
+let rec inline internal blockItem (ctx: Ctx) (code: Code) =
     match space ctx code with
     | Nil ->
         match char ctx code with 
@@ -391,9 +391,9 @@ let inline internal blockItem (ctx: Ctx) (code: Code) =
                                 match at ctx code with
                                 | Nil ->
                                     match num ctx code with
-                                    // | Nil ->
-                                    //     match str ctx code with
-                                    //     | r -> r
+                                    | Nil ->
+                                        match str ctx code with
+                                        | r -> r
                                     | r -> r
                                 | r -> r
                             | r -> r
@@ -406,7 +406,7 @@ let inline internal blockItem (ctx: Ctx) (code: Code) =
     
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-let internal blockBodyLoop (ctx: Ctx) (code: Code) close =
+and internal blockBodyLoop (ctx: Ctx) (code: Code) close =
     if code.IsEmpty then 
         let pos = ctx.pos.[code.offset]
         ctx.errs.Add(BlockNotClosed(pos, close))
@@ -424,7 +424,7 @@ let internal blockBodyLoop (ctx: Ctx) (code: Code) close =
     | _ ->
     raise <| ScannerException(UnknownSymbol <| ctx.pos.[code.offset])
 
-let inline internal blockBody (ctx: Ctx) (code: Code) close typ =
+and inline internal blockBody (ctx: Ctx) (code: Code) close typ =
     let tokens = ctx.tokens
     ctx.tokens <- List()
     let struct(rloc, r) = blockBodyLoop ctx code.Tail close
@@ -434,7 +434,7 @@ let inline internal blockBody (ctx: Ctx) (code: Code) close typ =
     tokens.Add(Tokens.Block bl)
     Just r
 
-let internal block (ctx: Ctx) (code: Code) =
+and internal block (ctx: Ctx) (code: Code) =
     match code.First with
     | Just '{' -> blockBody ctx code '}' BracketsType.Curly
     | Just '(' -> blockBody ctx code ')' BracketsType.Round
@@ -443,11 +443,74 @@ let internal block (ctx: Ctx) (code: Code) =
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// todo str
+and internal strPartEscape (ctx: Ctx) (code: Code) (items: TStrPart List) =
+    match strEscape ctx code 1 with
+    | (i, Just str) -> 
+        let range = code.CodeRangeTo i
+        let loc = ctx.Loc range
+        let raw = ctx.SubStr range
+        let esc = TStrEscape.New(str, raw, loc)
+        items.Add(Escape esc)
+        code.CodeRangeFrom i
+    | (i, Nil) -> code.CodeRangeFrom i
+
+and internal strPartBlock (ctx: Ctx) (code: Code) (items: TStrPart List) =
+    let dollar = ctx.Loc (code.CodeRangeTo 1)
+    let tokens = ctx.tokens
+    ctx.tokens <- List()
+    let struct(rloc, r) = blockBodyLoop ctx code.[2..] '}' 
+    let lloc = ctx.Loc (code.CodeRangeTo 2)
+    let block = TBlock.New(BracketsType.Curly, lloc, rloc, tokens.ToArray())
+    ctx.tokens <- tokens
+    let tbl = { Dollar = dollar; Block = block }
+    items.Add(Block tbl)
+    r
+
+and internal strPartStr (ctx: Ctx) (code: Code) q (items: TStrPart List) i =
+    match code.[i] with
+    | Nil | Just '\\' | Just '$' -> 
+        let range = code.CodeRangeTo i
+        let str = ctx.SubStr range
+        let part = Str str
+        items.Add(part)
+        code.CodeRangeFrom i
+    | Just c when c = q ->
+        let range = code.CodeRangeTo i
+        let str = ctx.SubStr range
+        let part = Str str
+        items.Add(part)
+        code.CodeRangeFrom i
+    | _ -> strPartStr ctx code q items (i + 1)
+
+and internal strBody (ctx: Ctx) (code: Code) q lloc (items: TStrPart List) =
+    match code.First with
+    | Nil -> 
+        let pos = ctx.pos.[code.offset]
+        ctx.errs.Add(StringNotClosed(pos))
+        raise <| ScannerException(UnexpectedEof pos)
+    | Just c when c = q -> 
+        let rloc = ctx.Loc (code.CodeRangeTo 1)
+        let tstr = TStr.New(lloc, rloc, items.ToArray())
+        ctx.tokens.Add(Tokens.Str tstr)
+        Just <| code.CodeRangeFrom 1
+    | Just c ->
+    let r = 
+        if c = '$' && (match code.[1] with Just '{' -> true | _ -> false) then strPartBlock ctx code items
+        elif c = '\\' then strPartEscape ctx code items
+        else strPartStr ctx code q items 1
+    strBody ctx (code.ByCodeRange r) q lloc items
+
+and internal str (ctx: Ctx) (code: Code) =
+    match code.First with
+    | Just (q & (''' | '"')) -> 
+        let lloc = (ctx.Loc (code.CodeRangeTo 1))
+        let items = List<TStrPart>()
+        strBody ctx code.Tail q lloc items
+    | _ -> Nil
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-let internal root (ctx: Ctx) (code: Code) = 
+let rec internal root (ctx: Ctx) (code: Code) = 
     if code.IsEmpty then () else 
     let r = blockItem ctx code
     match r with 
