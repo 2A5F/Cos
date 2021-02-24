@@ -19,9 +19,9 @@ let a + 1;
 ### If
 
 ```scala
-if a { b }
-if a { b } else { c }
-if a { b } else if c { d }
+if a do { b }
+if a do { b } else { c }
+if a do { b } else if c do { d }
 if a do b;
 if a do b else c;
 
@@ -35,7 +35,7 @@ if a else b;
 
 ```haskell
 case a;
-of b { c }
+of b do { c }
 of d do e;
 else { f }
 ```
@@ -44,7 +44,7 @@ case 块
 
 ```haskell
 case a {
-  of b { c }
+  of b do { c }
   of d do e;
   else { f }
 }
@@ -52,7 +52,7 @@ case a {
 
 ### Do
 
-do 块在如 if 的条件内使用时必须包在括号内
+do 块在如 if 等 的条件内使用时必须包在括号内
 
 ```scala
 do { }
@@ -70,18 +70,18 @@ do { } with do { }
 ### For
 
 ```scala
-for { }
-for true { }
-for e of i { }
+for do { }
+for true do { }
+for e of i do { }
 
-for { } with { } // for with 尾随的作用域是每次循环结束后
+for do { } with { } // for with 尾随的作用域是每次循环结束后
 ```
 
 #### 使用 with 模拟三元 for
 
 ```scala
 do { var a = 1 } with
-for a < len { 
+for a < len do { 
 
 } with { let a + 1 }
 ```
@@ -102,7 +102,7 @@ return a;
 do@l {
   break@l;
 }
-for@l true { 
+for@l true do { 
   continue@l;
 }
 fn@l some() {
@@ -123,9 +123,9 @@ try some();
 
 ```scala
 try some();
-catch e : Foo { }
-catch e : Bar { }
-catch e { }
+catch e : Foo do { }
+catch e : Bar do { }
+catch e do { }
 catch { }
 ```
 
@@ -139,7 +139,7 @@ finally { }
 
 ```scala
 do { try some() } 
-with catch e { }
+with catch e do { }
 with catch { }
 with finally { }
 ```
@@ -267,6 +267,7 @@ var t: in (1, 2, 3, 4, 5) = 3; // 等于 1 | 2 | 3 | 4 | 5
 
 ```ts
 var a: 1 | 2 = 1;
+def bool = true | false;
 ```
 
 ### 和类型
