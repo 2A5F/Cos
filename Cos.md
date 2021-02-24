@@ -143,6 +143,7 @@ body:
   if (some) goto end; // break
 inc:
   a++;
+  goto cond;
 end:;
 ```
 
@@ -261,17 +262,23 @@ var t: (int, bool, str) = (1, true, 'asd');
 
 ### 单元类型
 
+单元类型，类型和值都是自己
+
 ```js
 var u: () = ();
 ```
 
 ### 顶类型
 
+顶类型，可以放入任何值
+
 ```js
 var a: any;
 ```
 
 ### 底类型
+
+底类型，没有值
 
 ```js
 var n: !;
@@ -310,6 +317,25 @@ def bool = true | false;
 
 ```ts
 var a: { a: 1 } & { b: 2 } = { a = 1, b = 2 };
+```
+
+### 可空类型
+
+```js
+var u: ?T = ();
+def ?[T] = T | (); // 伪代码
+```
+
+### 可选类型
+
+```js
+var u: T? = none;
+var u: num? = some(1);
+var u: num? = 1; // 隐式转换
+
+def maybe[T] enum {
+  none, some(T)
+}
 ```
 
 ## 定义
