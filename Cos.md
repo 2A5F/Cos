@@ -86,7 +86,7 @@ for a < len do {
 } with { let a + 1 }
 ```
 
-### Break Continue Return
+### Break Continue Return Goto
 
 ```js
 break;
@@ -108,6 +108,42 @@ for@l true do {
 fn@l some() {
   return@l;
 }
+do@l {
+  goto@l;
+}
+```
+
+#### 裸三元 for 实现
+
+```scala
+do@block { 
+  var a = 1;
+  do@cond {
+    if a < len else break@block;
+  }
+  do@body {
+    if some do goto@inc; // continue
+    if some do break@block; // break
+    do@inc {
+      let a + 1;
+    }
+  }
+  goto@cond;
+}
+```
+
+##### C 语言版
+
+```c#
+  int a = 1;
+cond:
+  if (!(a < len)) goto end;
+body:
+  if (some) goto inc; // continue
+  if (some) goto end; // break
+inc:
+  a++;
+end:;
 ```
 
 ### Try Throw Catch Finally
