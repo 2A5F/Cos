@@ -224,8 +224,19 @@ def bool = true | false; // 伪代码，表示 true 和 false 可以作为字面
 
 ### 数字
 
-`int` 是 64 位整数  
-`num` 是 64 位浮点  
+`half` 是 16 位浮点数  
+`float` 是 32 位浮点数  
+`num` 是 64 位浮点数  
+
+`byte` 是 8 位有符号整数  
+`narrow` 是 16 位有符号整数  
+`short` 是 32 位有符号整数  
+`int` 是 64 位有符号整数  
+
+`ubyte` 是 8 位无符号整数  
+`unarrow` 是 16 位无符号整数  
+`ushort` 是 32 位无符号整数  
+`uint` 是 64 位无符号整数  
 
 ```js
 var i: int = 1;
