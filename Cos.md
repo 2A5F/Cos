@@ -218,9 +218,14 @@ var a = foo { };
 ```js
 var b: bool = true;
 var b = false;
+
+def bool = true | false; // 伪代码，表示 true 和 false 可以作为字面量独立存在
 ```
 
 ### 数字
+
+`int` 是 64 位整数  
+`num` 是 64 位浮点  
 
 ```js
 var i: int = 1;
@@ -252,6 +257,7 @@ var o: obj = o;
 
 ```js
 var a: [int] = [1, 2, 3];
+var a: [int; 3] = [1, 2, 3]; // 定长数组
 ```
 
 ### 元祖
@@ -293,27 +299,35 @@ def Range[T] = T..T;
 
 ### 字面量类型
 
+逻辑，数字，字符串，字符 都能取部分成员作为字面量类型  
+
 ```ts
 var a: 1 = 1;
 ```
 
 ### 约束范围
 
+约束范围和范围的区别是前面有 `in`  
+只有范围和元组可以作为 `in` 的目标  
+
 ```ts
 var a: in 1..10 = 5;
-def int = in -2147483648..2147483647;
+def int = in -9223372036854775808..9223372036854775807;
 var c: in c'a'..c'z' = c'f';
 var t: in (1, 2, 3, 4, 5) = 3; // 等于 1 | 2 | 3 | 4 | 5
 ```
 
 ### 或类型
 
+实际是 和（sum）类型
+
 ```ts
 var a: 1 | 2 = 1;
-def bool = true | false;
 ```
 
-### 和类型
+### 与类型
+
+实际是 积（product）类型
 
 ```ts
 var a: { a: 1 } & { b: 2 } = { a = 1, b = 2 };
@@ -322,18 +336,22 @@ var a: { a: 1 } & { b: 2 } = { a = 1, b = 2 };
 ### 可空类型
 
 ```js
-var u: ?T = ();
+var n: ?T = ();
+var n: ?int = 1;
+var n: ??int = 1; // 多层自动铺平
+
 def ?[T] = T | (); // 伪代码
 ```
 
 ### 可选类型
 
 ```js
-var u: T? = none;
-var u: num? = some(1);
-var u: num? = 1; // 隐式转换
+var o: T? = none;
+var o: int? = some(1);
+var o: int? = 1; // 隐式转换
+var o: int?? = some(1); // 不存在多层隐式转换
 
-def maybe[T] enum {
+def optional[T] enum {
   none, some(T)
 }
 ```
