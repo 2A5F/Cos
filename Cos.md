@@ -69,20 +69,22 @@ with 可以在同级作用域下尾随语句或尾随块
 :{ } with { }
 ```
 
-### For
+### 循环
 
 ```scala
-for true { } // 条件循环
-for e of i { } // 类似 for i in e
+while true { } // 条件循环
+for i in e { } // 迭代器循环
 
-for true { } with { } // for with 尾随的作用域是每次循环结束后
+while true { } with { } // for with 尾随的作用域是每次循环结束后
+
+while do true { } // 等于 c 系的 do while
 ```
 
 #### 使用 with 模拟三元 for
 
 ```scala
 :{ var a = 1 } with
-for a < len { 
+while a < len { 
 
 } with { let a + 1 }
 ```
