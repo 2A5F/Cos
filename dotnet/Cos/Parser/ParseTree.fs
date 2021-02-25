@@ -51,38 +51,64 @@ type PLetOper =
 
 type PIf =
     { TIf: TId
+      Label: PLabel Maybe
       Cond: PExpr
       Body: PIfBody }
-    override self.ToString() = "if {self.Cond}"
+
+    override self.ToString() =
+        $"if{self.Label.TryToStr} {self.Cond} {self.Body}"
 
 type PIfBody =
     | Expr of PIfThenExpr
-    | Block of PIfThenBlock
+    | Block of PBlock
+    | Else of PElseBody
+
+    override self.ToString() =
+        match self with
+        | Expr e -> string e
+        | Block e -> string e
+        | Else e -> string e
 
 type PIfThenExpr =
     { TDo: TId
-      Label: PLabel Maybe
-      Expr: PExpr }
-    override self.ToString() = $"do{self.Label.TryToStr} {self.Expr}"
+      Expr: PExpr
+      Else: PElseBody Maybe }
+
+    override self.ToString() =
+        let e = self.Else.TryToStrMap(" ")
+        $"do {self.Expr}{e}"
 
 type PIfThenBlock =
-    { TDo: TId
-      Label: PLabel Maybe
-      Block: PBlock }
-    override self.ToString() = $"do{self.Label.TryToStr} {self.Block}"
+    { Block: PBlock
+      Else: PElseBody Maybe }
 
-type PIfElseExpr =
+    override self.ToString() =
+        let e = self.Else.TryToStrMap(" ")
+        $"{self.Block}{e}"
+
+type PElseBody =
+    | Expr of PElseThenExpr
+    | Block of PElseThenBlock
+
+    override self.ToString() =
+        match self with
+        | Expr e -> string e
+        | Block e -> string e
+
+type PElseThenExpr =
     { TElse: TId
-      Label: PLabel Maybe
+      TDo: TId Maybe
       Expr: PExpr }
-    override self.ToString() = $"else do{self.Label.TryToStr} {self.Expr}"
 
-type PIfElseBlock =
+    override self.ToString() =
+        let d = self.TDo.TryToStrMap(" ")
+        $"else{d} {self.Expr}"
+
+type PElseThenBlock =
     { TElse: TId
-      Label: PLabel Maybe
       Block: PBlock }
-    override self.ToString() = $"else{self.Label.TryToStr} {self.Block}"
 
+    override self.ToString() = $"else {self.Block}"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
