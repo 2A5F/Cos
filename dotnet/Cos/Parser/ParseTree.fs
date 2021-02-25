@@ -251,15 +251,6 @@ type PFinally =
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-type PType =
-    | Id of TId
-
-    override self.ToString() =
-        match self with
-        | Id i -> i.ToString()
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
 type PBlock =
     { Brackets: struct (Loc * Loc)
       Items: PItem [] }
@@ -471,3 +462,12 @@ type PPat =
     override self.ToString() =
         match self with
         | Id i -> string i
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+type PType =
+    | Id of TId
+
+    override self.ToString() =
+        match self with
+        | Id i -> i.ToString()
