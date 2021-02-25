@@ -190,6 +190,47 @@ type PFor =
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+type PBreak =
+    { TBreak: TId
+      Label: PLabel Maybe
+      Expr: PExpr Maybe }
+
+    override self.ToString() =
+        $"break{self.Label.TryToStr}{self.Expr.TryToStrSL}"
+
+type PContinue =
+    { TContinue: TId
+      Label: PLabel Maybe }
+
+    override self.ToString() = $"continue{self.Label.TryToStr}"
+
+type PReturn =
+    { TReturn: TId
+      Label: PLabel Maybe
+      Expr: PExpr Maybe }
+
+    override self.ToString() =
+        $"return{self.Label.TryToStr}{self.Expr.TryToStrSL}"
+
+type PGoto =
+    { TGoto: TId
+      Label: PLabel Maybe }
+
+    override self.ToString() = $"goto{self.Label.TryToStr}"
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+type PThrow =
+    { TThrow: TId
+      Expr: PExpr }
+
+    override self.ToString() = $"throw {self.Expr}"
+
+// type PCatch =
+//     {}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 type PType =
     | Id of TId
 
@@ -206,6 +247,11 @@ type PExpr =
     | While of PWhile
     | For of PFor
     | Block of PCodeBlock
+    | Break of PBreak
+    | Continue of PContinue
+    | Return of PReturn
+    | Goto of PGoto
+    | Throw of PThrow
 
     override self.ToString() =
         match self with
@@ -215,6 +261,11 @@ type PExpr =
         | While i -> string i
         | For i -> string i
         | Block i -> string i
+        | Break i -> string i
+        | Continue i -> string i
+        | Return i -> string i
+        | Goto i -> string i
+        | Throw i -> string i
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 

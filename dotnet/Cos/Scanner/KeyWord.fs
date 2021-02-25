@@ -7,10 +7,11 @@ open Volight.Cos.Utils
 open Volight.Cos.Utils.SubStrEx
 
 type KeyWord =
-| Var = 0uy | Let = 1uy | If = 2uy | Else = 3uy | Do = 4uy | Case = 5uy | Of = 6uy | With = 7uy | For = 8uy | Break = 9uy 
-| Continue = 10uy | Return = 11uy | Try = 12uy | Catch = 13uy | Finally = 14uy | Fn = 15uy | Def = 16uy | Data = 17uy | Kind = 18uy | Enum = 19uy
-| TMe = 20uy | Me = 21uy | Where = 22uy | Module = 23uy | Import = 24uy | Export = 25uy | Is = 26uy | As = 27uy | Const = 28uy | Static = 29uy
-| Co = 30uy | Inline = 31uy | Tail = 32uy | Public = 33uy | Private = 34uy | Internal = 35uy | Protected = 36uy
+| Var = 0uy | Let = 1uy | If = 2uy | Else = 3uy | Do = 4uy | Case = 5uy | Of = 6uy | With = 7uy | For = 8uy | While = 9uy | Break = 10uy 
+| Continue = 11uy | Return = 12uy | Try = 13uy | Throw = 14uy | Catch = 15uy | Finally = 16uy | Fn = 17uy | Def = 18uy | Data = 19uy | Kind = 20uy | Enum = 21uy
+| TMe = 22uy | Me = 23uy | Where = 24uy | Module = 25uy | Import = 26uy | Export = 27uy | Is = 28uy | As = 29uy | Const = 30uy | Static = 31uy
+| Co = 32uy | Inline = 33uy | Throws = 34uy | Tail = 35uy | Public = 36uy | Private = 37uy | Internal = 38uy | Protected = 39uy | Goto = 40uy | Need = 41uy
+| In = 42uy
 
 module KeyWords =
     [<AbstractClass; Sealed>]
@@ -40,6 +41,7 @@ module KeyWords =
 
     let idAllowed k =
         match k with
-        | KeyWord.Co | KeyWord.Inline | KeyWord.Tail 
+        | KeyWord.Co | KeyWord.Inline | KeyWord.Tail | KeyWord.Throws
+        | KeyWord.Data | KeyWord.Kind | KeyWord.Enum | KeyWord.Need
             -> true
         | _ -> false
