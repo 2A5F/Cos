@@ -24,7 +24,9 @@ let tryToStr a =
 
 let tryToStrMap a (p: string) (s: string) (c: string) =
     let sb = StringBuilder()
+    let mutable first = true
     for i in a do
-        sb.Append(string i).Append(c) |> ignore
+        if first then first <- true else  sb.Append(c) |> ignore
+        sb.Append(string i) |> ignore
     if sb.Length = 0 then "" else
     $"{p}{string sb}{s}"

@@ -8,14 +8,14 @@ open Volight.Cos.SrcPos
 
 type PVar =
     { TVar: TId
-      Name: TId
+      Pat: PPat
       Type: PTypeAnno Maybe
       Val: PVarVal Maybe
       Split: TSplit }
 
     override self.ToString() =
         let v = self.Val.TryToStrMap(" ")
-        $"var {self.Name}{self.Type.TryToStr}{v};"
+        $"var {self.Pat}{self.Type.TryToStr}{v};"
 
 type PVarVal =
     { TEq: TOper
@@ -72,11 +72,12 @@ type PIfBody =
 type PIfThenExpr =
     { TDo: TId
       Expr: PExpr
-      Else: PElseBody Maybe }
+      Else: PElseBody Maybe
+      Split: TSplit Maybe }
 
     override self.ToString() =
         let e = self.Else.TryToStrMap(" ")
-        $"do {self.Expr}{e}"
+        $"do {self.Expr}{e}{self.Split.TryToStr}"
 
 type PIfThenBlock =
     { Block: PBlock
@@ -98,17 +99,74 @@ type PElseBody =
 type PElseThenExpr =
     { TElse: TId
       TDo: TId Maybe
-      Expr: PExpr }
+      Expr: PExpr
+      Split: TSplit }
 
     override self.ToString() =
         let d = self.TDo.TryToStrMap(" ")
-        $"else{d} {self.Expr}"
+        $"else{d} {self.Expr};"
 
 type PElseThenBlock =
     { TElse: TId
       Block: PBlock }
 
     override self.ToString() = $"else {self.Block}"
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+type PCase =
+    { TCase: TId
+      Expr: PExpr
+      Body: PCaseBody }
+
+    override self.ToString() = $"case {self.Expr} {self.Body}"
+
+type PCaseBody =
+    | Flat of PCaseFlat
+    | Block of PCaseBlock
+
+type PCaseFlat =
+    { Split: TSplit
+      Items: PCaseItem [] }
+
+    override self.ToString() =
+        let v = tryToStrMap self.Items " " " " " "
+        $";{v}"
+
+type PCaseBlock =
+    { Brackets: struct (Loc * Loc)
+      Items: PCaseItem [] }
+
+    override self.ToString() =
+        let v = tryToStrMap self.Items " " " " " "
+        $"{{{v}}}"
+
+type PCaseItem =
+    | Of of PCaseOf
+    | Else of PElseBody
+
+type PCaseOf =
+    { TOf: TId
+      Pat: PPat
+      Body: PCaseOfBody }
+
+    override self.ToString() = $"of {self.Pat}"
+
+type PCaseOfBody =
+    | Expr of PCaseOfThenExpr
+    | Block of PCaseOfThenBlock
+
+type PCaseOfThenExpr =
+    { TDo: TId
+      Expr: PExpr
+      Split: TSplit }
+
+    override self.ToString() = $"do {self.Expr};"
+
+type PCaseOfThenBlock =
+    { Block: PBlock }
+
+    override self.ToString() = $"{self.Block}"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -123,18 +181,24 @@ type PType =
 
 type PExpr =
     | Id of TId
+    | If of PIf
+    | Case of PCase
 
     override self.ToString() =
         match self with
-        | Id i -> i.ToString()
+        | Id i -> string i
+        | If i -> string i
+        | Case i -> string i
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 type PBlock =
-    { Brackets: struct (Loc * Loc * BracketsType)
+    { Brackets: struct (Loc * Loc)
       Items: PItem [] }
 
-    override self.ToString() = "todo"
+    override self.ToString() =
+        let b = tryToStrMap self.Items " " " " " "
+        $"{{{b}}}"
 
 type PLabel =
     { At: TAt
@@ -145,3 +209,7 @@ type PLabel =
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 type PItem = Split of TSplit
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+type PPat = Id of TId
