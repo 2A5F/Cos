@@ -22,6 +22,21 @@ type Maybe<'T> =
         | Nil -> ""
         | Just v -> $"{p}{v.ToString()}{s}"
 
+    member self.TryToStrSL =
+        match self with
+        | Nil -> ""
+        | Just v -> $" {v.ToString()}"
+
+    member self.TryToStrSR =
+        match self with
+        | Nil -> ""
+        | Just v -> $"{v.ToString()} "
+
+    member self.TryToStrSLR =
+        match self with
+        | Nil -> ""
+        | Just v -> $" {v.ToString()} "
+
 type MaybeBuilder() =
     member inline _.Bind(m, f) =
         match m with

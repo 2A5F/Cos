@@ -14,8 +14,7 @@ type PVar =
       Split: TSplit }
 
     override self.ToString() =
-        let v = self.Val.TryToStrMap(" ")
-        $"var {self.Pat}{self.Type.TryToStr}{v};"
+        $"var {self.Pat}{self.Type.TryToStr}{self.Val.TryToStrSL};"
 
 type PVarVal =
     { TEq: TOper
@@ -76,16 +75,13 @@ type PIfThenExpr =
       Split: TSplit Maybe }
 
     override self.ToString() =
-        let e = self.Else.TryToStrMap(" ")
-        $"do {self.Expr}{e}{self.Split.TryToStr}"
+        $"do {self.Expr}{self.Else.TryToStrSL}{self.Split.TryToStr}"
 
 type PIfThenBlock =
     { Block: PBlock
       Else: PElseBody Maybe }
 
-    override self.ToString() =
-        let e = self.Else.TryToStrMap(" ")
-        $"{self.Block}{e}"
+    override self.ToString() = $"{self.Block}{self.Else.TryToStrSL}"
 
 type PElseBody =
     | Expr of PElseThenExpr
@@ -103,8 +99,7 @@ type PElseThenExpr =
       Split: TSplit }
 
     override self.ToString() =
-        let d = self.TDo.TryToStrMap(" ")
-        $"else{d} {self.Expr};"
+        $"else{self.TDo.TryToStrSL} {self.Expr};"
 
 type PElseThenBlock =
     { TElse: TId
@@ -170,6 +165,31 @@ type PCaseOfThenBlock =
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+type PWhile =
+    { TWhile: TId
+      Label: PLabel Maybe
+      TDo: TId Maybe
+      Cond: PExpr
+      Block: PBlock
+      With: PWith Maybe }
+
+    override self.ToString() =
+        $"while{self.Label.TryToStr}{self.TDo.TryToStrSL} {self.Cond} {self.Block}{self.With.TryToStrSL}"
+
+type PFor =
+    { TFor: TId
+      Label: PLabel Maybe
+      Pat: PPat
+      TIn: TId
+      Iter: PExpr
+      Block: PBlock
+      With: PWith Maybe }
+
+    override self.ToString() =
+        $"for{self.Label.TryToStr} {self.Pat} in {self.Iter} {self.Block}{self.With.TryToStrSL}"
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 type PType =
     | Id of TId
 
@@ -183,12 +203,18 @@ type PExpr =
     | Id of TId
     | If of PIf
     | Case of PCase
+    | While of PWhile
+    | For of PFor
+    | Block of PCodeBlock
 
     override self.ToString() =
         match self with
         | Id i -> string i
         | If i -> string i
         | Case i -> string i
+        | While i -> string i
+        | For i -> string i
+        | Block i -> string i
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -206,9 +232,62 @@ type PLabel =
 
     override self.ToString() = $"@{self.Name}"
 
+type PCodeBlock =
+    { Colon: TOper
+      Label: PLabel Maybe
+      Block: PBlock
+      With: PWith Maybe }
+
+    override self.ToString() =
+        $":{self.Label.TryToStr}{self.Block}{self.With.TryToStr}"
+
+type PItemLabel =
+    { Colon: TOper
+      Label: PLabel
+      Split: TSplit }
+
+    override self.ToString() = $":{self.Label};"
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-type PItem = Split of TSplit
+type PWith =
+    { TWith: TId
+      Target: PWithTarget }
+
+    override self.ToString() = $"with{self.Target}"
+
+type PWithTarget =
+    | Block of PWtihBlock
+    | If of PIf
+    | Case of PCase
+    | While of PWhile
+    | For of PFor
+    | CodeBlock of PCodeBlock
+
+type PWtihBlock =
+    { Label: PLabel Maybe
+      Block: PBlock }
+
+    override self.ToString() = $"{self.Label.TryToStrSR}{self.Block}"
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+type PItem =
+    | Split of TSplit
+    | If of PIf
+    | Case of PCase
+    | While of PWhile
+    | For of PFor
+    | Block of PCodeBlock
+    | Expr of PExprItem
+    | Ret of PExpr
+    | Label of PItemLabel
+
+type PExprItem =
+    { Expr: PExpr
+      Split: TSplit }
+
+    override self.ToString() = $"{self.Expr};"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
