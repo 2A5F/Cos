@@ -260,37 +260,6 @@ type PType =
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-type PExpr =
-    | Id of TId
-    | If of PIf
-    | Case of PCase
-    | While of PWhile
-    | For of PFor
-    | Block of PCodeBlock
-    | Break of PBreak
-    | Continue of PContinue
-    | Return of PReturn
-    | Goto of PGoto
-    | Throw of PThrow
-    | Try of PTry
-
-    override self.ToString() =
-        match self with
-        | Id i -> string i
-        | If i -> string i
-        | Case i -> string i
-        | While i -> string i
-        | For i -> string i
-        | Block i -> string i
-        | Break i -> string i
-        | Continue i -> string i
-        | Return i -> string i
-        | Goto i -> string i
-        | Throw i -> string i
-        | Try i -> string i
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
 type PBlock =
     { Brackets: struct (Loc * Loc)
       Items: PItem [] }
@@ -329,21 +298,110 @@ type PWith =
 
     override self.ToString() = $"with{self.Target}"
 
-type PWithTarget =
-    | Block of PWtihBlock
-    | If of PIf
-    | Case of PCase
-    | While of PWhile
-    | For of PFor
-    | CodeBlock of PCodeBlock
-    | Catch of PCatch
-    | Finally of PFinally
-
 type PWtihBlock =
     { Label: PLabel Maybe
       Block: PBlock }
 
     override self.ToString() = $"{self.Label.TryToStrSR}{self.Block}"
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+type PFn =
+    { TFn: TId
+      Label: PLabel Maybe
+      Name: TId
+      Params: PParams
+      Type: PRetType Maybe
+      Affix: PFnAffix []
+      Body: PBlock }
+
+    override self.ToString() =
+        let a = tryToStrMap self.Affix " " "" " "
+        $"fn{self.Label.TryToStr} {self.Name}{self.Params}{self.Type.TryToStrSL}{a} {self.Body}"
+
+type PRetType =
+    { TArrow: TOper
+      Type: PType }
+
+    override self.ToString() = $"-> {self.Type}"
+
+type PParams =
+    { Brackets: struct (Loc * Loc)
+      Items: PParamItem [] }
+
+    override self.ToString() =
+        let v = tryToStrMap self.Items "" "" " "
+        $"({v})"
+
+type PParamItem =
+    { Pat: PPat
+      Type: PTypeAnno Maybe
+      Val: PVarVal Maybe
+      Comma: TComma Maybe }
+
+    override self.ToString() =
+        $"{self.Pat}{self.Type.TryToStr}{self.Val.TryToStrSL}{self.Comma.TryToStr}"
+
+type PFnAffix =
+    | Co of TId
+    | Inline of TId
+    | Throws of TId
+    | Tail of TId
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+type PCall =
+    { Target: PExpr
+      Args: PArgs }
+
+    override self.ToString() = $"{self.Target}{self.Args}"
+
+type PArgs =
+    { Brackets: struct (Loc * Loc)
+      Items: PArgItem [] }
+
+    override self.ToString() =
+        let v = tryToStrMap self.Items "" "" " "
+        $"({v})"
+
+type PArgItem =
+    { Expr: PExpr
+      Comma: TComma Maybe }
+
+    override self.ToString() = $"{self.Expr}{self.Comma.TryToStr}"
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+type PExpr =
+    | Id of TId
+    | If of PIf
+    | Case of PCase
+    | While of PWhile
+    | For of PFor
+    | Block of PCodeBlock
+    | Break of PBreak
+    | Continue of PContinue
+    | Return of PReturn
+    | Goto of PGoto
+    | Throw of PThrow
+    | Try of PTry
+    | Call of PCall
+
+    override self.ToString() =
+        match self with
+        | Id i -> string i
+        | If i -> string i
+        | Case i -> string i
+        | While i -> string i
+        | For i -> string i
+        | Block i -> string i
+        | Break i -> string i
+        | Continue i -> string i
+        | Return i -> string i
+        | Goto i -> string i
+        | Throw i -> string i
+        | Try i -> string i
+        | Call i -> string i
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -359,6 +417,22 @@ type PItem =
     | Label of PItemLabel
     | Catch of PCatch
     | Finally of PFinally
+    | Fn of PFn
+
+    override self.ToString() =
+        match self with
+        | Split i -> string i
+        | If i -> string i
+        | Case i -> string i
+        | While i -> string i
+        | For i -> string i
+        | Block i -> string i
+        | Expr i -> string i
+        | Ret i -> string i
+        | Label i -> string i
+        | Catch i -> string i
+        | Finally i -> string i
+        | Fn i -> string i
 
 type PExprItem =
     { Expr: PExpr
@@ -368,4 +442,32 @@ type PExprItem =
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-type PPat = Id of TId
+type PWithTarget =
+    | Block of PWtihBlock
+    | If of PIf
+    | Case of PCase
+    | While of PWhile
+    | For of PFor
+    | CodeBlock of PCodeBlock
+    | Catch of PCatch
+    | Finally of PFinally
+
+    override self.ToString() =
+        match self with
+        | If i -> string i
+        | Case i -> string i
+        | While i -> string i
+        | For i -> string i
+        | Block i -> string i
+        | Catch i -> string i
+        | Finally i -> string i
+        | CodeBlock i -> string i
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+type PPat =
+    | Id of TId
+
+    override self.ToString() =
+        match self with
+        | Id i -> string i
