@@ -1,6 +1,7 @@
 module internal Volight.Cos.Utils.Utils
 
 open System
+open System.Text
 open System.Collections.Generic
 
 let maybe = MaybeBuilder()
@@ -13,3 +14,17 @@ type Dictionary<'K, 'V> with
 
 let inline todo () = raise <| NotImplementedException("todo")
 let inline todoBy msg = raise <| NotImplementedException($"todo {msg}")
+
+let tryToStr a =
+    let sb = StringBuilder()
+    for i in a do
+        sb.Append(string i) |> ignore
+    if sb.Length = 0 then "" else
+    string sb
+
+let tryToStrMap a (p: string) (s: string) (c: string) =
+    let sb = StringBuilder()
+    for i in a do
+        sb.Append(string i).Append(c) |> ignore
+    if sb.Length = 0 then "" else
+    $"{p}{string sb}{s}"

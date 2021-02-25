@@ -7,6 +7,21 @@ type Maybe<'T> =
     | Nil
     | Just of 'T
 
+    member self.TryToStr =
+        match self with
+        | Nil -> ""
+        | Just v -> v.ToString()
+
+    member self.TryToStrMap(p) =
+        match self with
+        | Nil -> ""
+        | Just v -> $"{p}{v.ToString()}"
+
+    member self.TryToStrMap(p, s) =
+        match self with
+        | Nil -> ""
+        | Just v -> $"{p}{v.ToString()}{s}"
+
 type MaybeBuilder() =
     member inline _.Bind(m, f) =
         match m with
