@@ -159,10 +159,11 @@ end:;
 
 ### Try Throw Catch Finally
 
-调用含有 throw 的函数必须使用 try
+含有 `throw` 的函数必须使用 `throws` 标注  
+调用含有 `throw` 的函数必须使用 `try`  
 
 ```scala
-fn some() { throw a }
+fn some() throws { throw a }
 try some();
 ```
 
