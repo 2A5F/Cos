@@ -105,7 +105,7 @@ return a;
 :@l {
   break@l;
 }
-for@l true { 
+while@l true { 
   continue@l;
 }
 fn@l some() {
