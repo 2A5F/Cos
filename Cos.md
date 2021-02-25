@@ -23,10 +23,10 @@ if a do { b }
 if a do { b } else { c }
 if a do { b } else if c do { d }
 if a do b;
-if a do b else c;
+if a do b else do c;
 
 if a else { b }
-if a else b;
+if a else do b;
 ```
 
 ### Case
