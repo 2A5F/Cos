@@ -199,8 +199,26 @@ add(1, 2);
 
 ### 类型
 
-```js
+```ts
 var f: fn (a: int, int) -> int;
+```
+
+### 表达式
+
+```ts
+// 函数表达式
+var f = fn (a: int, b: int) -> int { a + b };
+var f = fn (a, b) { a + b };
+// 块函数表达式
+var f = fn { (a: int, b: int) -> int => a + b };
+var f = fn { (a, b) => a + b };
+
+// 具名函数表达式
+var f = fn fib (n: int, a: int = 0, b: int = 1) { if n > 0 do fib(n - 1, b, a + b) else a };
+var f = fn { fib (n: int, a: int = 0, b: int = 1) => if n > 0 do fib(n - 1, b, a + b) else a };
+
+// 单表达式函数
+var f = fn (a, b) => a + b;
 ```
 
 ### 尾块函数
