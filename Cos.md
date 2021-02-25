@@ -236,8 +236,6 @@ var a = foo { };
 ```js
 var b: bool = true;
 var b = false;
-
-def bool = true | false; // 伪代码，表示 true 和 false 可以作为字面量独立存在
 ```
 
 ### 数字
@@ -450,6 +448,13 @@ def Bar enum {
   
   fn some() {}
 }
+```
+
+```scala
+def bool enum {
+  true, false
+}
+type a = true; // 枚举的成员可以作为字面量类型独立存在  
 ```
 
 ## 泛型
