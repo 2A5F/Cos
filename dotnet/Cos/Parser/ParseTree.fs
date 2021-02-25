@@ -473,6 +473,58 @@ type PTypeTupleItemName =
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+type PBool =
+    | True of TId
+    | False of TId
+
+
+type PStr =
+    { Left: Loc
+      Right: Loc
+      Items: PStrPart [] }
+
+type PStrPart =
+    | Str of SubStr
+    | Escape of TStrEscape
+    | Block of PStrBlock
+
+type PStrBlock = { Dollar: Loc; Block: PBlock }
+
+
+type PTypeStr =
+    { Left: Loc
+      Right: Loc
+      Items: PStrPart [] }
+
+type PTypeStrPart =
+    | Str of SubStr
+    | Escape of TStrEscape
+    | Block of PStrBlock
+
+type PTypeStrBlock =
+    { Dollar: Loc
+      Brackets: struct (Loc * Loc)
+      Type: PType }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+type PType =
+    | Id of TId
+    | Fn of PTypeFn
+    | Bool of PBool
+    | Num of TNum
+    | Str of PTypeStr
+
+    override self.ToString() =
+        match self with
+        | Id i -> string i
+        | Fn i -> string i
+        | Bool i -> string i
+        | Num i -> string i
+        | Str i -> string i
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 type PExpr =
     | Id of TId
     | If of PIf
@@ -490,6 +542,9 @@ type PExpr =
     | Fn of PExprFn
     | BlockFn of PExprBlockFn
     | TailFn of PTailFn
+    | Bool of PBool
+    | Num of TNum
+    | Str of PStr
 
     override self.ToString() =
         match self with
@@ -509,6 +564,9 @@ type PExpr =
         | Fn i -> string i
         | BlockFn i -> string i
         | TailFn i -> string i
+        | Bool i -> string i
+        | Num i -> string i
+        | Str i -> string i
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -578,14 +636,3 @@ type PPat =
     override self.ToString() =
         match self with
         | Id i -> string i
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-type PType =
-    | Id of TId
-    | Fn of PTypeFn
-
-    override self.ToString() =
-        match self with
-        | Id i -> string i
-        | Fn i -> string i
