@@ -18,15 +18,19 @@ let a + 1;
 
 ### If
 
+单表达式情况可以使用 `=>` 标注  
+
 ```scala
-if a do { b }
-if a do { b } else { c }
-if a do { b } else if c do { d }
-if a do b;
-if a do b else do c;
+if a { b }
+if a { b } else { c }
+if a { b } else if c { d }
+if a => b;
+if a => b else c;
 
 if a else { b }
-if a else do b;
+if a else b;
+
+if a else => { b = 1 }; // else 也可以使用 : 标注为表达式
 ```
 
 ### Case
@@ -35,8 +39,8 @@ if a else do b;
 
 ```haskell
 case a;
-of b do { c }
-of d do e;
+of b { c }
+of d => e;
 else { f }
 ```
 
@@ -44,15 +48,13 @@ case 块
 
 ```haskell
 case a {
-  of b do { c }
-  of d do e;
+  of b { c }
+  of d => e;
   else { f }
 }
 ```
 
 ### Do
-
-do 块在如 if 等 的条件内使用时必须包在括号内
 
 ```scala
 do { }
@@ -61,27 +63,27 @@ var a = do { }
 
 ### With
 
-with 可以在同级作用域下尾随语句
+with 可以在同级作用域下尾随语句或尾随块  
 
 ```scala
 do { } with do { }
+do { } with { }
 ```
 
 ### For
 
 ```scala
-for do { }
-for true do { }
-for e of i do { }
+for true { } // 条件循环
+for e of i { } // 类似 for i in e
 
-for do { } with { } // for with 尾随的作用域是每次循环结束后
+for true { } with { } // for with 尾随的作用域是每次循环结束后
 ```
 
 #### 使用 with 模拟三元 for
 
 ```scala
 do { var a = 1 } with
-for a < len do { 
+for a < len { 
 
 } with { let a + 1 }
 ```
@@ -102,7 +104,7 @@ return a;
 do@l {
   break@l;
 }
-for@l true do { 
+for@l true { 
   continue@l;
 }
 fn@l some() {
@@ -122,8 +124,8 @@ do@block {
     if a < len else break@block;
   }
   do@body {
-    if some do goto@inc; // continue
-    if some do break@block; // break
+    goto@inc; // continue
+    break@block; // break
     do@inc {
       let a + 1;
     }
@@ -139,8 +141,8 @@ do@block {
 cond:
   if (!(a < len)) goto end;
 body:
-  if (some) goto inc; // continue
-  if (some) goto end; // break
+  goto inc; // continue
+  goto end; // break
 inc:
   a++;
   goto cond;
@@ -160,9 +162,9 @@ try some();
 
 ```scala
 try some();
-catch e : Foo do { }
-catch e : Bar do { }
-catch e do { }
+catch e : Foo { }
+catch e : Bar { }
+catch e { }
 catch { }
 ```
 
@@ -176,7 +178,7 @@ finally { }
 
 ```scala
 do { try some() } 
-with catch e do { }
+with catch e { }
 with catch { }
 with finally { }
 ```
@@ -209,6 +211,7 @@ var f: fn (a: int, int) -> int;
 // 函数表达式
 var f = fn (a: int, b: int) -> int { a + b };
 var f = fn (a, b) { a + b };
+
 // 块函数表达式
 var f = fn { (a: int, b: int) -> int => a + b };
 var f = fn { (a, b) => a + b };
@@ -223,10 +226,17 @@ var f = fn (a, b) => a + b;
 
 ### 尾块函数
 
-跟在表达式后面的块是尾块函数，要求表达式的类型是输入一个函数的函数
+跟在表达式后面的块是尾块函数，要求表达式的类型是输入一个函数的函数  
 
 ```js
 var a = foo { };
+```
+
+在诸如 `if` 的条件表达式等地方，要使用尾块函数必须包在 `()` 内  
+或者使用显式尾块语法  
+
+```js
+var a = foo.{ };
 ```
 
 ## 基础类型
