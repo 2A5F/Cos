@@ -436,7 +436,7 @@ def Bar data(a: int) : Foo {
 
 #### 关联类型
 
-具有关联类型的接口必须显式标注实现  
+要求实现 Foo 的目标具有名为 Bar 的子成员  
 
 ```scala
 def Foo kind {
