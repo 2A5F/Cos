@@ -308,16 +308,16 @@ type PWtihBlock =
 type PFn =
     { Label: PLabelDef Maybe
       TFn: TId
-
       Name: TId
       Params: PParams
       Ret: PRetType Maybe
       Affix: PFnAffix []
-      Body: PBlock }
+      Body: PFnBody
+      Split: TSplit Maybe }
 
     override self.ToString() =
         let a = tryToStrMap self.Affix " " "" " "
-        $"{self.Label.TryToStr}fn {self.Name}{self.Params}{self.Ret.TryToStrSL}{a} {self.Body}"
+        $"{self.Label.TryToStr}fn {self.Name}{self.Params}{self.Ret.TryToStrSL}{a} {self.Body}{self.Split.TryToStr}"
 
 type PRetType =
     { TArrow: TOper
@@ -347,6 +347,74 @@ type PFnAffix =
     | Inline of TId
     | Throws of TId
     | Tail of TId
+
+type PFnBody =
+    | Expr of PFnBodyExpr
+    | Block of PBlock
+
+type PFnBodyExpr =
+    { TDo: TId
+      Expr: PExpr }
+
+    override self.ToString() = $"do {self.Expr}"
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+type PExprFn =
+    { Label: PLabelDef Maybe
+      TFn: TId
+      Name: TId Maybe
+      Params: PParams
+      Ret: PRetType Maybe
+      Affix: PFnAffix []
+      Body: PFnBody }
+
+    override self.ToString() =
+        let a = tryToStrMap self.Affix " " "" " "
+        $"{self.Label.TryToStr}fn {self.Name.TryToStr}{self.Params}{self.Ret.TryToStrSL}{a} {self.Body}"
+
+type PExprBlockFn =
+    { Label: PLabelDef Maybe
+      TFn: TId
+      Body: PBlockFnBody }
+
+    override self.ToString() = $"{self.Label.TryToStr}fn {self.Body}"
+
+type PBlockFnBody =
+    { Brackets: struct (Loc * Loc)
+      Sig: PBlockFnBodySig Maybe
+      Items: PItem [] }
+
+    override self.ToString() =
+        let b = tryToStrMap self.Items " " " " " "
+        $"{{{self.Sig.TryToStrSL}{b}}}"
+
+type PBlockFnBodySig =
+    { Name: TId Maybe
+      Params: PParams
+      Ret: PRetType Maybe
+      Affix: PFnAffix []
+      TDo: TId }
+
+    override self.ToString() =
+        let a = tryToStrMap self.Affix " " "" " "
+        $"{self.Name.TryToStrSR}{self.Params}{self.Ret.TryToStrSL}{a} do"
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+type PTailFn =
+    { Target: PExpr
+      Dot: TOper Maybe
+      Label: PLabelDef Maybe
+      Block: PBlockFnBody }
+
+    override self.ToString() =
+        let dot =
+            match self.Dot with
+            | Just i -> string i
+            | _ -> " "
+
+        $"{self.Target}{dot}{self.Label.TryToStr}{self.Block}"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -405,16 +473,6 @@ type PTypeTupleItemName =
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-type PTailFn =
-    { Target: PExpr
-      Label: PLabelDef Maybe
-      Block: PBlock }
-
-    override self.ToString() =
-        $"{self.Target} {self.Label.TryToStr}{self.Block}"
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
 type PExpr =
     | Id of TId
     | If of PIf
@@ -429,6 +487,8 @@ type PExpr =
     | Throw of PThrow
     | Try of PTry
     | Call of PCall
+    | Fn of PExprFn
+    | BlockFn of PExprBlockFn
     | TailFn of PTailFn
 
     override self.ToString() =
@@ -446,6 +506,8 @@ type PExpr =
         | Throw i -> string i
         | Try i -> string i
         | Call i -> string i
+        | Fn i -> string i
+        | BlockFn i -> string i
         | TailFn i -> string i
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
