@@ -434,6 +434,16 @@ def Bar data(a: int) : Foo {
 }
 ```
 
+#### 关联类型
+
+具有关联类型的接口必须显式标注实现  
+
+```scala
+def Foo kind {
+  def Bar need;
+}
+```
+
 ### 枚举定义
 
 ```scala
