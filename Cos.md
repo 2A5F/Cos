@@ -102,16 +102,16 @@ return a;
 带标签情况
 
 ```kotlin
-:@l {
+l@:{
   break@l;
 }
-while@l true { 
+l@while true { 
   continue@l;
 }
-fn@l some() {
+l@fn some() {
   return@l;
 }
-:@l {
+l@:{
   goto@l;
 }
 ```
@@ -119,22 +119,22 @@ fn@l some() {
 裸标签  
 
 ```kotlin
-:@l;
+l@;
 goto@l;
 ```
 
 #### 裸三元 for 实现
 
 ```kotlin
-:@block { 
+block@:{ 
   var a = 1;
-  :@cond {
+  cond@:{
     if a < len else break@block;
   }
-  :@body {
+  body@:{
     goto@inc; // continue
     break@block; // break
-    :@inc {
+    inc@:{
       let a + 1;
     }
   }
@@ -186,7 +186,7 @@ finally { }
 #### 使用 with 模拟其他语言的 try catch finally
 
 ```scala
-:{ try some() } 
+@{ try some() } 
 with catch e { }
 with catch { }
 with finally { }

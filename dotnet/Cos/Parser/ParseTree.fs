@@ -49,13 +49,14 @@ type PLetOper =
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 type PIf =
-    { TIf: TId
-      Label: PLabel Maybe
+    { Label: PLabelDef Maybe
+      TIf: TId
+
       Cond: PExpr
       Body: PIfBody }
 
     override self.ToString() =
-        $"if{self.Label.TryToStr} {self.Cond} {self.Body}"
+        $"{self.Label.TryToStr}if {self.Cond} {self.Body}"
 
 type PIfBody =
     | Expr of PIfThenExpr
@@ -166,19 +167,21 @@ type PCaseOfThenBlock =
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 type PWhile =
-    { TWhile: TId
-      Label: PLabel Maybe
+    { Label: PLabelDef Maybe
+      TWhile: TId
+
       TDo: TId Maybe
       Cond: PExpr
       Block: PBlock
       With: PWith Maybe }
 
     override self.ToString() =
-        $"while{self.Label.TryToStr}{self.TDo.TryToStrSL} {self.Cond} {self.Block}{self.With.TryToStrSL}"
+        $"{self.Label.TryToStr}while{self.TDo.TryToStrSL} {self.Cond} {self.Block}{self.With.TryToStrSL}"
 
 type PFor =
-    { TFor: TId
-      Label: PLabel Maybe
+    { Label: PLabelDef Maybe
+      TFor: TId
+
       Pat: PPat
       TIn: TId
       Iter: PExpr
@@ -186,13 +189,13 @@ type PFor =
       With: PWith Maybe }
 
     override self.ToString() =
-        $"for{self.Label.TryToStr} {self.Pat} in {self.Iter} {self.Block}{self.With.TryToStrSL}"
+        $"{self.Label.TryToStr}for {self.Pat} in {self.Iter} {self.Block}{self.With.TryToStrSL}"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 type PBreak =
     { TBreak: TId
-      Label: PLabel Maybe
+      Label: PLabelUse Maybe
       Expr: PExpr Maybe }
 
     override self.ToString() =
@@ -200,13 +203,13 @@ type PBreak =
 
 type PContinue =
     { TContinue: TId
-      Label: PLabel Maybe }
+      Label: PLabelUse Maybe }
 
     override self.ToString() = $"continue{self.Label.TryToStr}"
 
 type PReturn =
     { TReturn: TId
-      Label: PLabel Maybe
+      Label: PLabelUse Maybe
       Expr: PExpr Maybe }
 
     override self.ToString() =
@@ -214,7 +217,7 @@ type PReturn =
 
 type PGoto =
     { TGoto: TId
-      Label: PLabel Maybe }
+      Label: PLabelUse Maybe }
 
     override self.ToString() = $"goto{self.Label.TryToStr}"
 
@@ -259,27 +262,32 @@ type PBlock =
         let b = tryToStrMap self.Items " " " " " "
         $"{{{b}}}"
 
-type PLabel =
+type PLabelDef =
+    { Name: TId
+      At: TAt }
+
+    override self.ToString() = $"{self.Name}@"
+
+type PLabelUse =
     { At: TAt
       Name: TId }
 
     override self.ToString() = $"@{self.Name}"
 
 type PCodeBlock =
-    { Colon: TOper
-      Label: PLabel Maybe
+    { Label: PLabelDef Maybe
+      Colon: TOper
       Block: PBlock
       With: PWith Maybe }
 
     override self.ToString() =
-        $":{self.Label.TryToStr}{self.Block}{self.With.TryToStr}"
+        $"{self.Label.TryToStr}:{self.Block}{self.With.TryToStr}"
 
 type PItemLabel =
-    { Colon: TOper
-      Label: PLabel
+    { Label: PLabelDef
       Split: TSplit }
 
-    override self.ToString() = $":{self.Label};"
+    override self.ToString() = $"{self.Label};"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -290,7 +298,7 @@ type PWith =
     override self.ToString() = $"with{self.Target}"
 
 type PWtihBlock =
-    { Label: PLabel Maybe
+    { Label: PLabelDef Maybe
       Block: PBlock }
 
     override self.ToString() = $"{self.Label.TryToStrSR}{self.Block}"
@@ -298,17 +306,18 @@ type PWtihBlock =
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 type PFn =
-    { TFn: TId
-      Label: PLabel Maybe
+    { Label: PLabelDef Maybe
+      TFn: TId
+
       Name: TId
       Params: PParams
-      Type: PRetType Maybe
+      Ret: PRetType Maybe
       Affix: PFnAffix []
       Body: PBlock }
 
     override self.ToString() =
         let a = tryToStrMap self.Affix " " "" " "
-        $"fn{self.Label.TryToStr} {self.Name}{self.Params}{self.Type.TryToStrSL}{a} {self.Body}"
+        $"{self.Label.TryToStr}fn {self.Name}{self.Params}{self.Ret.TryToStrSL}{a} {self.Body}"
 
 type PRetType =
     { TArrow: TOper
@@ -325,13 +334,13 @@ type PParams =
         $"({v})"
 
 type PParamItem =
-    { Pat: PPat
+    { Name: TId
       Type: PTypeAnno Maybe
       Val: PVarVal Maybe
       Comma: TComma Maybe }
 
     override self.ToString() =
-        $"{self.Pat}{self.Type.TryToStr}{self.Val.TryToStrSL}{self.Comma.TryToStr}"
+        $"{self.Name}{self.Type.TryToStr}{self.Val.TryToStrSL}{self.Comma.TryToStr}"
 
 type PFnAffix =
     | Co of TId
@@ -363,6 +372,49 @@ type PArgItem =
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+type PTypeFn =
+    { TFn: TId
+      Params: PTypeTuple
+      Ret: PRetType Maybe }
+
+    override self.ToString() =
+        $"fn {self.Params}{self.Ret.TryToStrSL}"
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+type PTypeTuple =
+    { Brackets: struct (Loc * Loc)
+      Items: PTypeTupleItem [] }
+
+    override self.ToString() =
+        let v = tryToStrMap self.Items "" "" " "
+        $"({v})"
+
+type PTypeTupleItem =
+    { Name: PTypeTupleItemName Maybe
+      Type: PType
+      Comma: TComma Maybe }
+
+    override self.ToString() = $"{self.Name.TryToStrSR}{self.Type}"
+
+type PTypeTupleItemName =
+    { Name: TId
+      TColon: TOper }
+
+    override self.ToString() = $"{self.Name}:"
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+type PTailFn =
+    { Target: PExpr
+      Label: PLabelDef Maybe
+      Block: PBlock }
+
+    override self.ToString() =
+        $"{self.Target} {self.Label.TryToStr}{self.Block}"
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 type PExpr =
     | Id of TId
     | If of PIf
@@ -377,6 +429,7 @@ type PExpr =
     | Throw of PThrow
     | Try of PTry
     | Call of PCall
+    | TailFn of PTailFn
 
     override self.ToString() =
         match self with
@@ -393,6 +446,7 @@ type PExpr =
         | Throw i -> string i
         | Try i -> string i
         | Call i -> string i
+        | TailFn i -> string i
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -467,7 +521,9 @@ type PPat =
 
 type PType =
     | Id of TId
+    | Fn of PTypeFn
 
     override self.ToString() =
         match self with
-        | Id i -> i.ToString()
+        | Id i -> string i
+        | Fn i -> string i
