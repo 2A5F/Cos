@@ -226,8 +226,28 @@ type PThrow =
 
     override self.ToString() = $"throw {self.Expr}"
 
-// type PCatch =
-//     {}
+type PTry =
+    { TTry: TId
+      Expr: PExpr }
+
+    override self.ToString() = $"try {self.Expr}"
+
+type PCatch =
+    { TCatch: TId
+      Pat: PPat Maybe
+      Block: PBlock
+      With: PWith Maybe }
+
+    override self.ToString() =
+        $"catch{self.Pat.TryToStrSL} {self.Block}{self.With.TryToStrSL}"
+
+type PFinally =
+    { TFinally: TId
+      Block: PBlock
+      With: PWith Maybe }
+
+    override self.ToString() =
+        $"finally {self.Block}{self.With.TryToStrSL}"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -252,6 +272,7 @@ type PExpr =
     | Return of PReturn
     | Goto of PGoto
     | Throw of PThrow
+    | Try of PTry
 
     override self.ToString() =
         match self with
@@ -266,6 +287,7 @@ type PExpr =
         | Return i -> string i
         | Goto i -> string i
         | Throw i -> string i
+        | Try i -> string i
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -314,6 +336,8 @@ type PWithTarget =
     | While of PWhile
     | For of PFor
     | CodeBlock of PCodeBlock
+    | Catch of PCatch
+    | Finally of PFinally
 
 type PWtihBlock =
     { Label: PLabel Maybe
@@ -333,6 +357,8 @@ type PItem =
     | Expr of PExprItem
     | Ret of PExpr
     | Label of PItemLabel
+    | Catch of PCatch
+    | Finally of PFinally
 
 type PExprItem =
     { Expr: PExpr
