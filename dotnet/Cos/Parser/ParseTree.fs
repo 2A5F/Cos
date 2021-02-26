@@ -727,6 +727,108 @@ type PTypeOptional =
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+type PTypeGeneric =
+    { Target: PType
+      Generic: PGenericUse }
+
+    override self.ToString() = $"{self.Target}{self.Generic}"
+
+type PGeneric =
+    { Target: PExpr
+      Generic: PGenericUse }
+
+    override self.ToString() = $"{self.Target}{self.Generic}"
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+type PTypeFor =
+    { TFor: PFor
+      Generic: PGenericUse
+      Type: PType Maybe }
+
+    override self.ToString() =
+        $"for{self.Generic}{self.Type.TryToStrSL}"
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+type PDef =
+    { TDef: TId
+      Name: TId
+      Generic: PGenericDef Maybe
+      Body: PDefBody }
+
+    override self.ToString() =
+        $"def {self.Name}{self.Generic.TryToStr} {self.Body}"
+
+type PDefBody =
+    | Alias of PDefAlias
+    | Need of PDefNeed
+
+    override self.ToString() =
+        match self with
+        | Alias i -> string i
+        | Need i -> string i
+
+type PDefAlias =
+    { TEq: TOper
+      Type: PType
+      TSplit: TSplit }
+
+    override self.ToString() = $"= {self.Type};"
+
+type PDefNeed =
+    { TNeed: TId
+      Constraint: PTypeConstraint Maybe
+      TSplit: TSplit }
+
+    override self.ToString() = $"need{self.Constraint.TryToStrSL};"
+
+type PDefData =
+    { TData: TId
+      Params: PParams Maybe
+      Constraint: PTypeConstraint Maybe }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+type PGenericDef =
+    { Brackets: struct (Loc * Loc)
+      Items: PGenericDefItem [] }
+
+    override self.ToString() =
+        let i = tryToStrMap self.Items "" "" " "
+        $"[{i}]"
+
+type PGenericDefItem =
+    { Name: TId
+      Constraint: PTypeConstraint Maybe
+      TComma: TComma Maybe }
+
+    override self.ToString() =
+        $"{self.Name}{self.Constraint.TryToStr}{self.TComma.TryToStr}"
+
+type PTypeConstraint =
+    { TColon: TOper
+      Type: PType }
+
+    override self.ToString() = $": {self.Type}"
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+type PGenericUse =
+    { Brackets: struct (Loc * Loc)
+      Items: PGenericUseItem [] }
+    override self.ToString() =
+        let i = tryToStrMap self.Items "" "" " "
+        $"[{i}]"
+
+type PGenericUseItem =
+    { Type: PType
+      TComma: TComma Maybe }
+
+    override self.ToString() = $"{self.Type}{self.TComma.TryToStr}"
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 type PType =
     | Id of TId
     | Fn of PTypeFn
@@ -745,6 +847,7 @@ type PType =
     | And of PTypeAnd
     | Nullable of PTypeNullable
     | Optional of PTypeOptional
+    | Generic of PTypeGeneric
 
     override self.ToString() =
         match self with
@@ -765,6 +868,7 @@ type PType =
         | And i -> string i
         | Nullable i -> string i
         | Optional i -> string i
+        | Generic i -> string i
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -795,6 +899,7 @@ type PExpr =
     | RangeTo of PRangeTo
     | RangeFrom of PRangeFrom
     | In of PInOper
+    | Generic of PGeneric
 
     override self.ToString() =
         match self with
@@ -824,6 +929,7 @@ type PExpr =
         | RangeTo i -> string i
         | RangeFrom i -> string i
         | In i -> string i
+        | Generic i -> string i
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -840,6 +946,7 @@ type PItem =
     | Catch of PCatch
     | Finally of PFinally
     | Fn of PFn
+    | Def of PDef
 
     override self.ToString() =
         match self with
@@ -855,6 +962,7 @@ type PItem =
         | Catch i -> string i
         | Finally i -> string i
         | Fn i -> string i
+        | Def i -> string i
 
 type PExprItem =
     { Expr: PExpr

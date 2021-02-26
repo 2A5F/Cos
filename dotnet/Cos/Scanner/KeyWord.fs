@@ -11,12 +11,12 @@ type KeyWord =
 | Continue = 11uy | Return = 12uy | Try = 13uy | Throw = 14uy | Catch = 15uy | Finally = 16uy | Fn = 17uy | Def = 18uy | Data = 19uy | Kind = 20uy | Enum = 21uy
 | TMe = 22uy | Me = 23uy | Where = 24uy | Module = 25uy | Import = 26uy | Export = 27uy | Is = 28uy | As = 29uy | Const = 30uy | Static = 31uy
 | Co = 32uy | Inline = 33uy | Throws = 34uy | Tail = 35uy | Public = 36uy | Private = 37uy | Internal = 38uy | Protected = 39uy | Goto = 40uy | Need = 41uy
-| In = 42uy
+| In = 42uy | Underscore = 43uy
 
 module KeyWords =
     [<AbstractClass; Sealed>]
     type private DoInit() =
-        static let keyWord2Strs i = struct(i, match i with KeyWord.TMe -> "Me" | _ -> Enum.GetName(i).ToLower() ) 
+        static let keyWord2Strs i = struct(i, match i with KeyWord.TMe -> "Me" | KeyWord.Underscore -> "_" | _ -> Enum.GetName(i).ToLower() ) 
         static let _strs: struct (KeyWord * string) [] = Enum.GetValues(typeof<KeyWord>).Cast<KeyWord>().Select(keyWord2Strs).ToArray()
         static let _enumToStr: Dictionary<KeyWord, string> = Dictionary()
         static let _strToEnum: Dictionary<string, KeyWord> = Dictionary()
@@ -43,5 +43,6 @@ module KeyWords =
         match k with
         | KeyWord.Co | KeyWord.Inline | KeyWord.Tail | KeyWord.Throws
         | KeyWord.Data | KeyWord.Kind | KeyWord.Enum | KeyWord.Need
+        | KeyWord.Underscore
             -> true
         | _ -> false
