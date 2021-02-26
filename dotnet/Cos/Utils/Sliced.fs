@@ -70,3 +70,7 @@ module SlicedEx =
         member self.AsSliced() = self.AsSpan().ToSliced()
         member self.AsSliced(start) = self.AsSpan(start).ToSliced()
         member self.AsSliced(start, ``end``) = self.AsSpan().ToSliced().Slice(start, ``end``)
+    type ``[]``<'T> with
+        member self.AsSliced() = self.AsSpan().ToSliced()
+        member self.AsSliced(start) = self.AsSpan().ToSliced().Slice(start)
+        member self.AsSliced(start, ``end``) = self.AsSpan().ToSliced().Slice(start, ``end``)
