@@ -4,17 +4,30 @@ open Volight.Cos.Utils
 open Volight.Cos.Utils.Utils
 open Volight.Cos.SrcPos
 
+type PAccess =
+    | Public of TId
+    | Private of TId
+    | Internal of TId
+
+    override self.ToString() =
+        match self with
+        | Public _ -> "public"
+        | Private _ -> "private"
+        | Internal _ -> "internal"
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 type PVar =
-    { TVar: TId
+    { TExport: TId Maybe
+      Access: PAccess Maybe
+      TVar: TId
       Pat: PPat
       Type: PTypeAnno Maybe
       Val: PVarVal Maybe
       Split: TSplit }
 
     override self.ToString() =
-        $"var {self.Pat}{self.Type.TryToStr}{self.Val.TryToStrSL};"
+        $"{self.TExport.TryToStrSR}{self.Access.TryToStrSR}var {self.Pat}{self.Type.TryToStr}{self.Val.TryToStrSL};"
 
 type PVarVal =
     { TEq: TOper
@@ -51,7 +64,6 @@ type PLetOper =
 type PIf =
     { Label: PLabelDef Maybe
       TIf: TId
-
       Cond: PExpr
       Body: PIfBody }
 
@@ -169,7 +181,6 @@ type PCaseOfThenBlock =
 type PWhile =
     { Label: PLabelDef Maybe
       TWhile: TId
-
       TDo: TId Maybe
       Cond: PExpr
       Block: PBlock
@@ -181,7 +192,6 @@ type PWhile =
 type PFor =
     { Label: PLabelDef Maybe
       TFor: TId
-
       Pat: PPat
       TIn: TId
       Iter: PExpr
@@ -306,7 +316,9 @@ type PWtihBlock =
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 type PFn =
-    { Label: PLabelDef Maybe
+    { TExport: TId Maybe
+      Access: PAccess Maybe
+      Label: PLabelDef Maybe
       TFn: TId
       Name: TId
       Params: PParams
@@ -319,10 +331,10 @@ type PFn =
         let a = tryToStrMap self.Affix " " "" " "
 
         let part1 =
-            $"{self.Label.TryToStr}fn {self.Name}{self.Params}{self.Ret.TryToStrSL}"
+            $"{self.TExport.TryToStrSR}{self.Access.TryToStrSR}{self.Label.TryToStr}fn {self.Name}{self.Params}"
 
         let part2 =
-            $"{a}{self.Body.TryToStrSL}{self.Split.TryToStr}"
+            $"{self.Ret.TryToStrSL}{a}{self.Body.TryToStrSL}{self.Split.TryToStr}"
 
         $"{part1}{part2}"
 
@@ -759,13 +771,15 @@ type PTypeFor =
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 type PDef =
-    { TDef: TId
+    { TExport: TId Maybe
+      Access: PAccess Maybe
+      TDef: TId
       Name: TId
       Generic: PGenericDef Maybe
       Body: PDefBody }
 
     override self.ToString() =
-        $"def {self.Name}{self.Generic.TryToStr} {self.Body}"
+        $"{self.TExport.TryToStrSR}{self.Access.TryToStrSR}def {self.Name}{self.Generic.TryToStr} {self.Body}"
 
 type PDefBody =
     | Alias of PDefAlias
@@ -915,6 +929,94 @@ type PGenericUseItem =
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+type PModule =
+    { TExport: TId Maybe
+      Access: PAccess Maybe
+      TModule: TId
+      Name: TId
+      Constraint: PTypeConstraint Maybe
+      Block: PBlock }
+
+    override self.ToString() =
+        $"{self.TExport.TryToStrSR}{self.Access.TryToStrSR}module {self.Name}{self.Constraint.TryToStrSL} {self.Block}"
+
+type PModuleHead =
+    { TModule: TId
+      Constraint: PTypeConstraint Maybe
+      TSplit: TSplit }
+
+    override self.ToString() = $"module{self.Constraint.TryToStrSL};"
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+type PImport =
+    { TImport: TId
+      Path: PImportPath
+      Use: PImportUse Maybe
+      TSplit: TSplit }
+
+    override self.ToString() =
+        $"import {self.Path}{self.Use.TryToStrSL};"
+
+type PExport =
+    { TExport: TId
+      Path: PImportPath
+      Use: PImportUse Maybe
+      TSplit: TSplit }
+
+    override self.ToString() =
+        $"export {self.Path}{self.Use.TryToStrSL};"
+
+type PImportPath =
+    | Id of TId
+    | Sub of PImportSubPath
+
+    override self.ToString() =
+        match self with
+        | Id i -> string i
+        | Sub i -> string i
+
+type PImportSubPath =
+    { Parent: PImportPath
+      TDot: TOper Maybe
+      Name: TId }
+
+    override self.ToString() = $"{self.Parent}.{self.Name}"
+
+type PImportUse =
+    | As of PImportAs
+    | Of of PImportOf
+
+    override self.ToString() =
+        match self with
+        | As i -> string i
+        | Of i -> string i
+
+type PImportAs =
+    { TAs: TId
+      Name: TId }
+
+    override self.ToString() = $"as ${self.Name}"
+
+type PImportOf =
+    { TOf: TId
+      Brackets: struct (Loc * Loc)
+      Items: PImportOfItem [] }
+
+    override self.ToString() =
+        let i = tryToStrMap self.Items " " " " " "
+        $"of {{{i}}}"
+
+type PImportOfItem =
+    { Path: PImportPath
+      As: PImportAs Maybe
+      TComma: TComma Maybe }
+
+    override self.ToString() =
+        $"{self.Path}{self.As.TryToStrSL}{self.TComma}"
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 type PType =
     | Id of TId
     | Fn of PTypeFn
@@ -1033,6 +1135,10 @@ type PItem =
     | Finally of PFinally
     | Fn of PFn
     | Def of PDef
+    | Module of PModule
+    | ModuleHead of PModuleHead
+    | Import of PImport
+    | Export of PExport
 
     override self.ToString() =
         match self with
@@ -1049,6 +1155,10 @@ type PItem =
         | Finally i -> string i
         | Fn i -> string i
         | Def i -> string i
+        | Module i -> string i
+        | ModuleHead i -> string i
+        | Import i -> string i
+        | Export i -> string i
 
 type PExprItem =
     { Expr: PExpr
@@ -1094,9 +1204,11 @@ type PMember =
     | Field of PVar
     | Method of PFn
     | Def of PDef
+    | Export of PExport
 
     override self.ToString() =
         match self with
         | Field i -> string i
         | Method i -> string i
         | Def i -> string i
+        | Export i -> string i
