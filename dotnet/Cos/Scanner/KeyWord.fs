@@ -43,6 +43,6 @@ module KeyWords =
         match k with
         | KeyWord.Co | KeyWord.Inline | KeyWord.Tail | KeyWord.Throws
         | KeyWord.Data | KeyWord.Kind | KeyWord.Enum | KeyWord.Need
-        | KeyWord.Underscore
+        | KeyWord.Underscore | KeyWord.Me | KeyWord.TMe
             -> true
         | _ -> false

@@ -312,12 +312,19 @@ type PFn =
       Params: PParams
       Ret: PRetType Maybe
       Affix: PFnAffix []
-      Body: PFnBody
+      Body: PFnBody Maybe
       Split: TSplit Maybe }
 
     override self.ToString() =
         let a = tryToStrMap self.Affix " " "" " "
-        $"{self.Label.TryToStr}fn {self.Name}{self.Params}{self.Ret.TryToStrSL}{a} {self.Body}{self.Split.TryToStr}"
+
+        let part1 =
+            $"{self.Label.TryToStr}fn {self.Name}{self.Params}{self.Ret.TryToStrSL}"
+
+        let part2 =
+            $"{a}{self.Body.TryToStrSL}{self.Split.TryToStr}"
+
+        $"{part1}{part2}"
 
 type PRetType =
     { TArrow: TOper
@@ -762,11 +769,17 @@ type PDef =
 
 type PDefBody =
     | Alias of PDefAlias
+    | Data of PDefData
+    | Kind of PDefKind
+    | Enum of PDefEnum
     | Need of PDefNeed
 
     override self.ToString() =
         match self with
         | Alias i -> string i
+        | Data i -> string i
+        | Kind i -> string i
+        | Enum i -> string i
         | Need i -> string i
 
 type PDefAlias =
@@ -786,7 +799,80 @@ type PDefNeed =
 type PDefData =
     { TData: TId
       Params: PParams Maybe
-      Constraint: PTypeConstraint Maybe }
+      Constraint: PTypeConstraint Maybe
+      Block: PDefDataBlock }
+
+    override self.ToString() =
+        $"data{self.Params.TryToStr}{self.Constraint.TryToStrSL} {self.Block}"
+
+type PDefDataBlock =
+    { Brackets: struct (Loc * Loc)
+      Items: PMember [] }
+
+    override self.ToString() =
+        let v = tryToStrMap self.Items " " " " " "
+        $"{{{v}}}"
+
+type PDefKind =
+    { TKind: TId
+      Constraint: PTypeConstraint Maybe
+      Block: PDefDataBlock }
+
+    override self.ToString() =
+        $"kind{self.Constraint.TryToStrSL} {self.Block}"
+
+type PDefEnum =
+    { TEnum: TId
+      Constraint: PTypeConstraint Maybe
+      Block: PDefEnumBlock }
+
+    override self.ToString() =
+        $"enum{self.Constraint.TryToStrSL} {self.Block}"
+
+type PDefEnumBlock =
+    { Brackets: struct (Loc * Loc)
+      Items: PDefEnumItems []
+      Member: PDefEnumMemberPart Maybe }
+
+    override self.ToString() =
+        let v = tryToStrMap self.Items " " " " " "
+        $"{{{v}{self.Member.TryToStr}}}"
+
+type PDefEnumItems =
+    { Item: PDefEnumItem
+      TComma: TComma Maybe }
+
+    override self.ToString() = $"{self.Item}{self.TComma.TryToStr}"
+
+type PDefEnumItem =
+    | Id of TId
+    | Tuple of PDefEnumItemTuple
+    | Obj of PDefEnumItemObj
+
+    override self.ToString() =
+        match self with
+        | Id i -> string i
+        | Tuple i -> string i
+        | Obj i -> string i
+
+type PDefEnumItemTuple =
+    { Name: TId
+      Tuple: PTypeTuple }
+
+    override self.ToString() = $"{self.Name}{self.Tuple}"
+
+type PDefEnumItemObj =
+    { Name: TId
+      Obj: PTypeObj }
+
+    override self.ToString() = $"{self.Name} {self.Obj}"
+
+type PDefEnumMemberPart =
+    { TSplit: TSplit
+      Items: PMember [] }
+    override self.ToString() =
+        let v = tryToStrMap self.Items " " " " " "
+        $";{v}"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1001,3 +1087,10 @@ type PPat =
     override self.ToString() =
         match self with
         | Id i -> string i
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+type PMember =
+    | Field of PVar
+    | Method of PFn
+    | Def of PDef
