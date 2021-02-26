@@ -419,7 +419,7 @@ def Foo = Bar;
 
 ```scala
 def Foo data {
-  a: int;
+  var a: int;
   
   fn Me(a: int) {
     let me.a = a;
@@ -443,12 +443,12 @@ a.val; // 1, 没有参数的函数可以省略括号
 
 ```scala
 def Foo kind {
-  a: int;
+  var a: int;
   fn add(b: int) -> int;
 }
 
 def Bar data(a: int) : Foo {
-  a: int = a;
+  var a: int = a;
   fn add(b: int) -> int { a + b }
 }
 ```
@@ -471,9 +471,7 @@ def Foo enum {
 }
 def Bar enum {
   A(int),
-  B { a: int },
-  C data { a: int },
-  D enum { A };
+  B { a: int };
   
   fn some() {}
 }
