@@ -616,6 +616,52 @@ type PTupleItem =
 
     override self.ToString() = $"{self.Expr}{self.TComma.TryToStr}"
 
+
+type PTypeNever =
+    { TNever: TOper }
+
+    override _.ToString() = "!"
+
+
+type PTypeRange =
+    { Left: PType
+      TRange: TOper
+      Right: PType }
+
+    override self.ToString() = $"{self.Left}{self.TRange}{self.Right}"
+
+type PRange =
+    { Left: PExpr
+      TRange: TOper
+      Right: PExpr }
+
+    override self.ToString() = $"{self.Left}{self.TRange}{self.Right}"
+
+
+type PTypeRangeTo =
+    { TRange: TOper
+      Right: PType }
+
+    override self.ToString() = $"{self.TRange}{self.Right}"
+
+type PRangeTo =
+    { TRange: TOper
+      Right: PExpr }
+
+    override self.ToString() = $"{self.TRange}{self.Right}"
+
+type PTypeRangeFrom =
+    { Left: PType
+      TRange: TOper }
+
+    override self.ToString() = $"{self.Left}{self.TRange}"
+
+type PRangeFrom =
+    { Left: PExpr
+      TRange: TOper }
+
+    override self.ToString() = $"{self.Left}{self.TRange}"
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 type PType =
@@ -627,6 +673,10 @@ type PType =
     | Obj of PTypeObj
     | Arr of PTypeArr
     | Tuple of PTypeTuple
+    | Never of PTypeNever
+    | Range of PTypeRange
+    | RangeTo of PTypeRangeTo
+    | RangeFrom of PTypeRangeFrom
 
     override self.ToString() =
         match self with
@@ -638,6 +688,10 @@ type PType =
         | Obj i -> string i
         | Arr i -> string i
         | Tuple i -> string i
+        | Never i -> string i
+        | Range i -> string i
+        | RangeTo i -> string i
+        | RangeFrom i -> string i
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -664,6 +718,9 @@ type PExpr =
     | Obj of PObj
     | Arr of PArr
     | Tuple of PTuple
+    | Range of PRange
+    | RangeTo of PRangeTo
+    | RangeFrom of PRangeFrom
 
     override self.ToString() =
         match self with
@@ -689,6 +746,9 @@ type PExpr =
         | Obj i -> string i
         | Arr i -> string i
         | Tuple i -> string i
+        | Range i -> string i
+        | RangeTo i -> string i
+        | RangeFrom i -> string i
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
