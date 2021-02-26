@@ -555,6 +555,23 @@ type PTypeObjItem =
     override self.ToString() =
         $"{self.Name}: {self.Type}{self.TComma.TryToStr}"
 
+type PObj =
+    { Brackets: struct (Loc * Loc)
+      Items: PObjItem [] }
+
+    override self.ToString() =
+        let i = tryToStrMap self.Items " " " " " "
+        $"{{{i}}}"
+
+type PObjItem =
+    { Name: TId
+      TEq: TOper
+      Expr: PExpr
+      TComma: TComma Maybe }
+
+    override self.ToString() =
+        $"{self.Name} = {self.Expr}{self.TComma.TryToStr}"
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 type PType =
@@ -563,6 +580,7 @@ type PType =
     | Bool of PBool
     | Num of TNum
     | Str of PTypeStr
+    | Obj of PTypeObj
 
     override self.ToString() =
         match self with
@@ -571,6 +589,7 @@ type PType =
         | Bool i -> string i
         | Num i -> string i
         | Str i -> string i
+        | Obj i -> string i
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -594,6 +613,7 @@ type PExpr =
     | Bool of PBool
     | Num of TNum
     | Str of PStr
+    | Obj of PObj
 
     override self.ToString() =
         match self with
@@ -616,6 +636,7 @@ type PExpr =
         | Bool i -> string i
         | Num i -> string i
         | Str i -> string i
+        | Obj i -> string i
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
