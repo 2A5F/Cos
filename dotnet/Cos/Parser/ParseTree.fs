@@ -482,6 +482,7 @@ type PBool =
         | True _ -> "true"
         | False _ -> "false"
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 type PStr =
     { Left: Loc
@@ -509,6 +510,7 @@ type PStrBlock =
 
     override self.ToString() = $"${self.Block}"
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 type PTypeStr =
     { Left: Loc
@@ -537,6 +539,7 @@ type PTypeStrBlock =
 
     override self.ToString() = $"${{ {self.Type} }}"
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 type PTypeObj =
     { Brackets: struct (Loc * Loc)
@@ -555,6 +558,8 @@ type PTypeObjItem =
     override self.ToString() =
         $"{self.Name}: {self.Type}{self.TComma.TryToStr}"
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 type PObj =
     { Brackets: struct (Loc * Loc)
       Items: PObjItem [] }
@@ -572,6 +577,7 @@ type PObjItem =
     override self.ToString() =
         $"{self.Name} = {self.Expr}{self.TComma.TryToStr}"
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 type PTypeArr =
     { Brackets: struct (Loc * Loc)
@@ -586,6 +592,7 @@ type PTypeArrLen =
 
     override self.ToString() = $"; {self.Len}"
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 type PArr =
     { Brackets: struct (Loc * Loc)
@@ -601,6 +608,7 @@ type PArrItem =
 
     override self.ToString() = $"{self.Expr}{self.TComma.TryToStr}"
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 type PTuple =
     { Brackets: struct (Loc * Loc)
@@ -616,12 +624,14 @@ type PTupleItem =
 
     override self.ToString() = $"{self.Expr}{self.TComma.TryToStr}"
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 type PTypeNever =
     { TNever: TOper }
 
     override _.ToString() = "!"
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 type PTypeRange =
     { Left: PType
@@ -662,6 +672,7 @@ type PRangeFrom =
 
     override self.ToString() = $"{self.Left}{self.TRange}"
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 type PTypeIn =
     { TIn: TId
@@ -675,6 +686,44 @@ type PInOper =
       Right: PExpr }
 
     override self.ToString() = $"{self.Left} in {self.Right}"
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+type PTypeOr =
+    { Items: PTypeOrItem [] }
+
+    override self.ToString() = tryToStrMap self.Items "" "" " "
+
+type PTypeOrItem =
+    { TOr: TOper Maybe
+      Type: PType }
+
+    override self.ToString() = $"{self.TOr.TryToStrSR}{self.Type}"
+
+type PTypeAnd =
+    { Items: PTypeAndItem [] }
+
+    override self.ToString() = tryToStrMap self.Items "" "" " "
+
+type PTypeAndItem =
+    { TAnd: TOper Maybe
+      Type: PType }
+
+    override self.ToString() = $"{self.TAnd.TryToStrSR}{self.Type}"
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+type PTypeNullable =
+    { TQ: TOper
+      Type: PType }
+
+    override self.ToString() = $"?{self.Type}"
+
+type PTypeOptional =
+    { Type: PType
+      TQ: TOper }
+
+    override self.ToString() = $"{self.Type}?"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -692,6 +741,10 @@ type PType =
     | RangeTo of PTypeRangeTo
     | RangeFrom of PTypeRangeFrom
     | In of PTypeIn
+    | Or of PTypeOr
+    | And of PTypeAnd
+    | Nullable of PTypeNullable
+    | Optional of PTypeOptional
 
     override self.ToString() =
         match self with
@@ -708,6 +761,10 @@ type PType =
         | RangeTo i -> string i
         | RangeFrom i -> string i
         | In i -> string i
+        | Or i -> string i
+        | And i -> string i
+        | Nullable i -> string i
+        | Optional i -> string i
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
