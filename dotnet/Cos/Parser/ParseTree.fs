@@ -662,6 +662,20 @@ type PRangeFrom =
 
     override self.ToString() = $"{self.Left}{self.TRange}"
 
+
+type PTypeIn =
+    { TIn: TId
+      Type: PType }
+
+    override self.ToString() = $"in {self.Type}"
+
+type PInOper =
+    { Left: PExpr
+      TIn: TId
+      Right: PExpr }
+
+    override self.ToString() = $"{self.Left} in {self.Right}"
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 type PType =
@@ -677,6 +691,7 @@ type PType =
     | Range of PTypeRange
     | RangeTo of PTypeRangeTo
     | RangeFrom of PTypeRangeFrom
+    | In of PTypeIn
 
     override self.ToString() =
         match self with
@@ -692,6 +707,7 @@ type PType =
         | Range i -> string i
         | RangeTo i -> string i
         | RangeFrom i -> string i
+        | In i -> string i
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -721,6 +737,7 @@ type PExpr =
     | Range of PRange
     | RangeTo of PRangeTo
     | RangeFrom of PRangeFrom
+    | In of PInOper
 
     override self.ToString() =
         match self with
@@ -749,6 +766,7 @@ type PExpr =
         | Range i -> string i
         | RangeTo i -> string i
         | RangeFrom i -> string i
+        | In i -> string i
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
