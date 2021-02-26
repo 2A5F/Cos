@@ -477,18 +477,37 @@ type PBool =
     | True of TId
     | False of TId
 
+    override self.ToString() =
+        match self with
+        | True _ -> "true"
+        | False _ -> "false"
+
 
 type PStr =
     { Left: Loc
       Right: Loc
       Items: PStrPart [] }
 
+    override self.ToString() =
+        let i = tryToStr self.Items
+        $"\"{i}\""
+
 type PStrPart =
     | Str of SubStr
     | Escape of TStrEscape
     | Block of PStrBlock
 
-type PStrBlock = { Dollar: Loc; Block: PBlock }
+    override self.ToString() =
+        match self with
+        | Str s -> string s
+        | Escape s -> string s.Raw
+        | Block b -> string b
+
+type PStrBlock =
+    { TDollar: Loc
+      Block: PBlock }
+
+    override self.ToString() = $"${self.Block}"
 
 
 type PTypeStr =
@@ -496,15 +515,45 @@ type PTypeStr =
       Right: Loc
       Items: PStrPart [] }
 
+    override self.ToString() =
+        let i = tryToStr self.Items
+        $"\"{i}\""
+
 type PTypeStrPart =
     | Str of SubStr
     | Escape of TStrEscape
     | Block of PStrBlock
 
+    override self.ToString() =
+        match self with
+        | Str s -> string s
+        | Escape s -> string s.Raw
+        | Block b -> string b
+
 type PTypeStrBlock =
-    { Dollar: Loc
+    { TDollar: Loc
       Brackets: struct (Loc * Loc)
       Type: PType }
+
+    override self.ToString() = $"${{ {self.Type} }}"
+
+
+type PTypeObj =
+    { Brackets: struct (Loc * Loc)
+      Items: PTypeObjItem [] }
+
+    override self.ToString() =
+        let i = tryToStrMap self.Items " " " " " "
+        $"{{{i}}}"
+
+type PTypeObjItem =
+    { Name: TId
+      TColon: TOper
+      Type: PType
+      TComma: TComma Maybe }
+
+    override self.ToString() =
+        $"{self.Name}: {self.Type}{self.TComma.TryToStr}"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
