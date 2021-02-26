@@ -439,9 +439,11 @@ type PTailFn =
 
 type PCall =
     { Target: PExpr
+      Nullable: TOper Maybe
       Args: PArgs }
 
-    override self.ToString() = $"{self.Target}{self.Args}"
+    override self.ToString() =
+        $"{self.Target}{self.Nullable.TryToStr}{self.Args}"
 
 type PArgs =
     { Brackets: struct (Loc * Loc)
@@ -770,6 +772,39 @@ type PTypeFor =
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+type POper =
+    { Left: PExpr
+      Oper: TOper
+      Right: PExpr }
+
+    override self.ToString() =
+        $"({self.Left} {self.Oper} {self.Right})"
+
+type POperLeft =
+    { Oper: TOper
+      Right: PExpr }
+
+    override self.ToString() = $"({self.Oper} {self.Right})"
+
+type POperRight =
+    { Left: PExpr
+      Oper: TOper }
+
+    override self.ToString() = $"({self.Left} {self.Oper})"
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+type PPath =
+    { Left: PExpr
+      TDot: TOper
+      Nullable: bool
+      Field: bool
+      Right: PExpr }
+
+    override self.ToString() = $"{self.Left}{self.TDot}{self.Right}"
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 type PDef =
     { TExport: TId Maybe
       Access: PAccess Maybe
@@ -1088,6 +1123,10 @@ type PExpr =
     | RangeFrom of PRangeFrom
     | In of PInOper
     | Generic of PGeneric
+    | Oper of POper
+    | OperLeft of POperLeft
+    | OperRight of POperRight
+    | Path of PPath
 
     override self.ToString() =
         match self with
@@ -1118,6 +1157,10 @@ type PExpr =
         | RangeFrom i -> string i
         | In i -> string i
         | Generic i -> string i
+        | Oper i -> string i
+        | OperLeft i -> string i
+        | OperRight i -> string i
+        | Path i -> string i
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
