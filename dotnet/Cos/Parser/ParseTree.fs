@@ -572,6 +572,7 @@ type PObjItem =
     override self.ToString() =
         $"{self.Name} = {self.Expr}{self.TComma.TryToStr}"
 
+
 type PTypeArr =
     { Brackets: struct (Loc * Loc)
       Type: PType
@@ -585,15 +586,31 @@ type PTypeArrLen =
 
     override self.ToString() = $"; {self.Len}"
 
+
 type PArr =
     { Brackets: struct (Loc * Loc)
       Items: PArrItem [] }
 
     override self.ToString() =
         let i = tryToStrMap self.Items "" "" " "
-        $"{{{i}}}"
+        $"[{i}]"
 
 type PArrItem =
+    { Expr: PExpr
+      TComma: TComma Maybe }
+
+    override self.ToString() = $"{self.Expr}{self.TComma.TryToStr}"
+
+
+type PTuple =
+    { Brackets: struct (Loc * Loc)
+      Items: PTupleItem [] }
+
+    override self.ToString() =
+        let i = tryToStrMap self.Items "" "" " "
+        $"({i})"
+
+type PTupleItem =
     { Expr: PExpr
       TComma: TComma Maybe }
 
@@ -609,6 +626,7 @@ type PType =
     | Str of PTypeStr
     | Obj of PTypeObj
     | Arr of PTypeArr
+    | Tuple of PTypeTuple
 
     override self.ToString() =
         match self with
@@ -619,6 +637,7 @@ type PType =
         | Str i -> string i
         | Obj i -> string i
         | Arr i -> string i
+        | Tuple i -> string i
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -644,6 +663,7 @@ type PExpr =
     | Str of PStr
     | Obj of PObj
     | Arr of PArr
+    | Tuple of PTuple
 
     override self.ToString() =
         match self with
@@ -668,6 +688,7 @@ type PExpr =
         | Str i -> string i
         | Obj i -> string i
         | Arr i -> string i
+        | Tuple i -> string i
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
