@@ -1094,3 +1094,9 @@ type PMember =
     | Field of PVar
     | Method of PFn
     | Def of PDef
+
+    override self.ToString() =
+        match self with
+        | Field i -> string i
+        | Method i -> string i
+        | Def i -> string i
