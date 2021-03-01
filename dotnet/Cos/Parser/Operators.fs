@@ -12,7 +12,10 @@ type OperInfo =
 
 module Operators =
     let inline operInfo name level assoc = { Name = name; Level = level; Assoc = assoc }
-    let midProhibitAlone = [| "!"; ":"; "." |]
+    let canAlone (o: TOper) =
+        let str = o.Str
+        if str.Length <> 1 then true else
+        match str with "!" | ":" | "." | "=" -> false | _ -> true
     let midInfos = [|
         operInfo "??" 0000 Left     // null coalescing
         operInfo "?:" 0000 Left     // optional continuation

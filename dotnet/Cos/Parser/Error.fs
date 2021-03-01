@@ -8,4 +8,5 @@ exception ParserException of ParserError
 type ParserError =
 | MultipleErrors of ParserError List
 | UnexpectedBlockEnd of Loc
+| UnknownOperator of TOper
 

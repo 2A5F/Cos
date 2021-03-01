@@ -23,6 +23,8 @@ and internal Ctx =
     val endloc: Loc
     new(ctx, endloc) = { ctx = ctx; endloc = endloc }
 
+    member self.Err(e) = self.ctx.errs.Add(e)
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 let internal endLocOf (tks: Tks) = match tks.Last with Just t -> t.Loc | Nil -> Loc.zero
@@ -55,15 +57,39 @@ let internal pExpr (ctx: Ctx) (tks: Tks) =
     | Nil -> Nil
     | Just e -> Just (e, cr)
 
-let internal pTryOperMid (ctx: Ctx) (tks: Tks) = 
+//let internal pTryOperMidInfo (ctx: Ctx) (tks: Tks) = 
+//    match tks.First with
+//    | Just (Tokens.Oper o) when Operators.canAlone o ->
+//        match Operators.midInfoMap.TryGet(o.Str) with 
+//        | Nil -> 
+//            ctx.Err(ParserError.UnknownOperator o)
+//            Nil 
+//        | Just info -> Just struct (o, info, tks.CodeRangeTail)
+//    | _ -> Nil
+
+
+type internal PCExprOper = PCExpr of PExpr | PCOper of TOper
+
+let rec internal pCollectExprOpers (ctx: Ctx) (tks: Tks) (list: PCExprOper List) =
+    match pExpr ctx tks with
+    | Just (e, cr) -> 
+        list.Add(PCExpr e)
+        pCollectExprOpers ctx (tks.ByCodeRange cr) list
+    | Nil ->
     match tks.First with
-    | Just (Tokens.Oper o) -> todo()
-    | _ -> todo()
+    | Just (Tokens.Oper o) when Operators.canAlone o ->
+        list.Add(PCOper o)
+        pCollectExprOpers ctx tks.Tail list
+    | _ -> list
+
+let internal pExprOpers (ctx: Ctx) (tks: Tks) = 
+    let eos = pCollectExprOpers ctx tks (List())
     todo()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 let internal root (ctx: Ctx) (tks: Tks) =
+    let r = pExprOpers ctx tks
     todo()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
