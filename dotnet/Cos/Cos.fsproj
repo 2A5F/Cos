@@ -13,6 +13,7 @@
     <Compile Include="Scanner\Token.fs" />
     <Compile Include="Scanner\Errors.fs" />
     <Compile Include="Scanner\Scanner.fs" />
+    <Compile Include="Parser\Operators.fs" />
     <Compile Include="Parser\ParseTree.fs" />
     <Compile Include="Parser\Error.fs" />
     <Compile Include="Parser\Parser.fs" />

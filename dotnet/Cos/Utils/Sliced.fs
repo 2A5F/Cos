@@ -57,6 +57,7 @@ type Sliced<'T> =
     member self.ToCodeRange : CodeRange = { From = self.offset; To = self.RawIndex self.Len } 
     member self.CodeRangeTo i : CodeRange = { From = self.offset; To = self.RawIndex i } 
     member self.CodeRangeFrom i : CodeRange = { From = self.RawIndex i; To = self.RawIndex self.Len } 
+    member inline self.CodeRangeTail : CodeRange = self.CodeRangeFrom 1
     member self.CodeRange(s, e) : CodeRange = { From = self.RawIndex s; To = self.RawIndex e } 
     member self.ByCodeRange (c: CodeRange) = self.Slice(self.FromRawIndex c.From, self.FromRawIndex c.To)
 

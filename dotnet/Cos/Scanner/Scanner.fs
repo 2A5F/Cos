@@ -82,7 +82,7 @@ let internal comma (ctx: Ctx) (code: Code) =
 
 let inline internal isOper c = 
     match c with 
-    | '!' | '%' | '+' | '-' | '*' | '/' | '^' | '|' | '&' | '>' | '<' | '.' | '=' | '?' | ':' -> true 
+    | '!' | '%' | '+' | '-' | '*' | '/' | '^' | '|' | '&' | '>' | '<' | '.' | '=' | '?' | ':' | '~' -> true 
     | _ -> false
 
 let rec internal operBody (ctx: Ctx) (code: Code) i =

@@ -118,6 +118,11 @@ type TId =
         | ID _ -> true
         | Key (k, _) -> KeyWords.idAllowed k
 
+    member self.IsKeyOf key =
+        match self with
+        | ID _ -> false
+        | Key (k, _) -> k = key
+
 /// <summary> <code>;</code> </summary>
 [<Struct; IsReadOnly>]
 type TSplit =
@@ -166,7 +171,7 @@ type TBlock =
         sb.Append('}') |> ignore
         sb.ToString()
 
-/// % ! + - * / ^ | & > < . = ? :
+/// % ! + - * / ^ | & > < . = ? : ~
 [<Struct; IsReadOnly; DebuggerDisplay(@"TOper \{ {ToString(),nq} \}")>]
 type TOper =
     { Str: string

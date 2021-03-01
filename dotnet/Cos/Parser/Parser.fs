@@ -25,12 +25,45 @@ and internal Ctx =
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-let endLocOf (tks: Tks) = match tks.Last with Just t -> t.Loc | Nil -> Loc.zero
+let internal endLocOf (tks: Tks) = match tks.Last with Just t -> t.Loc | Nil -> Loc.zero
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+let internal pBool (tks: Tks) =
+    match tks.First with
+    | Just (Tokens.ID (v & (Key (KeyWord.True, _)))) -> Just struct (True v |> Bool |> Just, tks.CodeRangeTail)
+    | Just (Tokens.ID (v & (Key (KeyWord.False, _)))) -> Just struct (False v |> Bool |> Just, tks.CodeRangeTail)
+    | _ -> Nil
+
+let internal pNum (tks: Tks) =
+    match tks.First with
+    | Just (Tokens.Num n) -> Just struct (Num n |> Just, tks.CodeRangeTail)
+    | _ -> Nil
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+let internal pExpr (ctx: Ctx) (tks: Tks) = 
+    let struct (e, cr) = 
+        match pBool tks with
+        | Just r -> r
+        | Nil -> 
+        match pNum tks with
+        | Just r -> r
+        | Nil -> 
+        (Nil, tks.ToCodeRange)
+    match e with
+    | Nil -> Nil
+    | Just e -> Just (e, cr)
+
+let internal pTryOperMid (ctx: Ctx) (tks: Tks) = 
+    match tks.First with
+    | Just (Tokens.Oper o) -> todo()
+    | _ -> todo()
+    todo()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 let internal root (ctx: Ctx) (tks: Tks) =
-    let endloc = endLocOf tks
     todo()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
