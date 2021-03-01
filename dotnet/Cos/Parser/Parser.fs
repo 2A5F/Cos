@@ -82,8 +82,13 @@ let rec internal pCollectExprOpers (ctx: Ctx) (tks: Tks) (list: PCExprOper List)
         pCollectExprOpers ctx tks.Tail list
     | _ -> list
 
+let rec internal pExprOpersStart (ctx: Ctx) (eos: PCExprOper List) i =
+    todo()
+
 let internal pExprOpers (ctx: Ctx) (tks: Tks) = 
     let eos = pCollectExprOpers ctx tks (List())
+    if eos.Count = 0 then Nil else
+    pExprOpersStart ctx eos 0
     todo()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
