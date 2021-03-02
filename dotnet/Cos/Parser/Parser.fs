@@ -70,24 +70,25 @@ let internal pExpr (ctx: Ctx) (tks: Tks) =
 
 type internal PCExprOper = PCExpr of PExpr | PCOper of TOper
 
-let rec internal pCollectExprOpers (ctx: Ctx) (tks: Tks) (list: PCExprOper List) =
+let rec internal pCollectExprOpers (ctx: Ctx) (tks: Tks) (list: PCExprOper DList) =
     match pExpr ctx tks with
     | Just (e, cr) -> 
-        list.Add(PCExpr e)
+        list.PushLast(PCExpr e)
         pCollectExprOpers ctx (tks.ByCodeRange cr) list
     | Nil ->
     match tks.First with
     | Just (Tokens.Oper o) when Operators.canAlone o ->
-        list.Add(PCOper o)
+        list.PushLast(PCOper o)
         pCollectExprOpers ctx tks.Tail list
-    | _ -> list
+    | _ -> list.TakeHead()
 
-let rec internal pExprOpersStart (ctx: Ctx) (eos: PCExprOper List) i =
+let rec internal pExprOpersStart (ctx: Ctx) (eos: PCExprOper dlist) i =
+    
     todo()
 
 let internal pExprOpers (ctx: Ctx) (tks: Tks) = 
-    let eos = pCollectExprOpers ctx tks (List())
-    if eos.Count = 0 then Nil else
+    let eos = pCollectExprOpers ctx tks (DList())
+    if DList.IsEmpty eos then Nil else
     pExprOpersStart ctx eos 0
     todo()
 
