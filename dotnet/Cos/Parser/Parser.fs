@@ -7,6 +7,7 @@ open Volight.Cos.SrcPos
 open Volight.Cos.Utils
 open Volight.Cos.Utils.Utils
 open Volight.Cos.Utils.SlicedEx
+open Volight.Cos.Utils.LinkedListExt
 open Volight.Cos.Parser.KeyWords
 
 
@@ -70,26 +71,29 @@ let internal pExpr (ctx: Ctx) (tks: Tks) =
 
 type internal PCExprOper = PCExpr of PExpr | PCOper of TOper
 
-let rec internal pCollectExprOpers (ctx: Ctx) (tks: Tks) (list: PCExprOper DList) =
+let rec internal pCollectExprOpers (ctx: Ctx) (tks: Tks) (list: PCExprOper LinkedList) =
     match pExpr ctx tks with
     | Just (e, cr) -> 
-        list.PushLast(PCExpr e)
+        list.PushLast(PCExpr e) |> ignore
         pCollectExprOpers ctx (tks.ByCodeRange cr) list
     | Nil ->
     match tks.First with
     | Just (Tokens.Oper o) when Operators.canAlone o ->
-        list.PushLast(PCOper o)
+        list.PushLast(PCOper o) |> ignore
         pCollectExprOpers ctx tks.Tail list
-    | _ -> list.TakeHead()
+    | _ -> list
 
-let rec internal pExprOpersStart (ctx: Ctx) (eos: PCExprOper dlist) i =
-    
-    todo()
+let rec internal pExprOpersStart (ctx: Ctx) (list: PCExprOper LinkedList) (node: PCExprOper LinkedListNode) =
+    match node.Value with
+    | PCOper o -> todo()
+    | PCExpr e ->
+        if node.HasNext then pExprOpersStart ctx list node.Next else 
+        if node.HasPrev then pExprOpersStart ctx list list.First else e
 
 let internal pExprOpers (ctx: Ctx) (tks: Tks) = 
-    let eos = pCollectExprOpers ctx tks (DList())
-    if DList.IsEmpty eos then Nil else
-    pExprOpersStart ctx eos 0
+    let eos = pCollectExprOpers ctx tks (LinkedList())
+    if eos.First = null then Nil else
+    let r = pExprOpersStart ctx eos eos.First
     todo()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
