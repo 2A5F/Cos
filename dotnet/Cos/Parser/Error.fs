@@ -9,4 +9,5 @@ type ParserError =
 | MultipleErrors of ParserError List
 | UnexpectedBlockEnd of Loc
 | UnknownOperator of TOper
+| IllegalAloneOperator of TOper
 

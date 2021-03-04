@@ -12,6 +12,7 @@ type OperInfo =
 
 module Operators =
     let inline operInfo name level assoc = { Name = name; Level = level; Assoc = assoc }
+    let inline defaultInfo s = operInfo s 10000 Left
     let canAlone (o: TOper) =
         let str = o.Str
         if str.Length <> 1 then true else
