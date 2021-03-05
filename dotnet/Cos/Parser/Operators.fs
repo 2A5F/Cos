@@ -13,7 +13,7 @@ type OperInfo =
 module Operators =
     let inline operInfo name level assoc = { Name = name; Level = level; Assoc = assoc }
     let inline defaultInfo s = operInfo s 10000 Left
-    let canAlone (o: TOper) =
+    let midCanAlone (o: TOper) =
         let str = o.Str
         if str.Length <> 1 then true else
         match str with "!" | ":" | "." | "=" -> false | _ -> true
@@ -53,5 +53,19 @@ module Operators =
         operInfo "%" 8000 Left      // mod
         operInfo "^" 9000 Right     // pow
     |]
+    let edgeInfos = [|
+        operInfo "-" 5000 Left      // prefix -, negative
+        operInfo "+" 5000 Left      // prefix +
+        operInfo "!" 5000 Left      // not
+        operInfo "*" 5000 Left      // deref
+        operInfo "&" 5000 Left      // ref
+        operInfo ".." 3000 Left     // range to
+        operInfo ".." 4000 Right    // range from
+        operInfo "!" 7000 Right     // not null assert
+        operInfo "!!" 7000 Right    // not null try
+        operInfo "!?" 7000 Right    // null try
+    |]
     let midInfoMap = midInfos.ToDictionary(fun i -> i.Name)
+    let leftInfoMap = edgeInfos.Where(function { Assoc = Left } -> true | _ -> false).ToDictionary(fun i -> i.Name)
+    let rightInfoMap = edgeInfos.Where(function { Assoc = Right } -> true | _ -> false).ToDictionary(fun i -> i.Name)
     ()
