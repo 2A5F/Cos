@@ -73,7 +73,7 @@ let rec internal pCollectExprOpers (ctx: Ctx) (tks: Tks) (list: PCExprOper List)
         pCollectExprOpers ctx tks.Tail list
     | _ -> list
 
-type internal PCExprOper2 = PC2Expr of PExpr | PC2OperMid of TOper * OperInfo | PC2OperEdge of TOper * OperInfo * OperAssoc
+type internal PCExprOper2 = PC2Expr of PExpr | PC2OperMid of TOper * OperInfo | PC2OperEdge of TOper * OperInfo
 
 let rec internal pCollectExprOpers2 (ctx: Ctx) (list: PCExprOper List) i (list2: PCExprOper2 LinkedList) =
     if i >= list.Count then list2 else
@@ -98,13 +98,17 @@ let rec internal pCollectExprOpers2 (ctx: Ctx) (list: PCExprOper List) i (list2:
         list2.PushLast(PC2Expr e) |> ignore
         pCollectExprOpers2 ctx list (i + 1) list2
 
+let rec internal pExprOpersEdgePart1 (ctx: Ctx) (list: PCExprOper2 LinkedList) (node: PCExprOper2 LinkedListNode) =
+    if node = null then () else
+    match node.Value with
+    | PC2Expr e -> pExprOpersEdgePart2 ctx list node e
+    | _ -> pExprOpersEdgePart1 ctx list node.Next
 
-
-//let inline llnTryValue (n: 'a LinkedListNode) = 
-//    maybe {
-//        let! a = n |> Maybe.nullable
-//        a.Value
-//    }
+and internal pExprOpersEdgePart2 (ctx: Ctx) (list: PCExprOper2 LinkedList) (node: PCExprOper2 LinkedListNode) e =
+    match llnTryValue node.Prev with
+    | Just (PC2OperEdge (o, info & { Assoc = Left })) -> todo()
+    | _ ->
+    todo()
 
 //let rec internal pExprOpersStart (ctx: Ctx) (list: PCExprOper2 LinkedList) (node: PCExprOper2 LinkedListNode) =
 //    match node.Value with
@@ -131,6 +135,7 @@ let internal pExprOpers (ctx: Ctx) (tks: Tks) =
     let eos = pCollectExprOpers ctx tks (List())
     if eos.Count = 0 then Nil else
     let eos = pCollectExprOpers2 ctx eos 0 (LinkedList())
+    pExprOpersEdgePart1 ctx eos eos.First
     //let r = pExprOpersStart ctx eos eos.First
     todo()
 

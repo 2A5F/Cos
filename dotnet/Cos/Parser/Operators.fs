@@ -54,16 +54,18 @@ module Operators =
         operInfo "^" 9000 Right     // pow
     |]
     let edgeInfos = [|
-        operInfo "-" 5000 Left      // prefix -, negative
-        operInfo "+" 5000 Left      // prefix +
-        operInfo "!" 5000 Left      // not
-        operInfo "*" 5000 Left      // deref
-        operInfo "&" 5000 Left      // ref
+        operInfo "-" 7000 Left      // prefix -, negative
+        operInfo "+" 7000 Left      // prefix +
+        operInfo "!" 7000 Left      // not
+        operInfo "*" 7000 Left      // deref
+        operInfo "&" 7000 Left      // ref
         operInfo ".." 3000 Left     // range to
-        operInfo ".." 4000 Right    // range from
-        operInfo "!" 7000 Right     // not null assert
-        operInfo "!!" 7000 Right    // not null try
-        operInfo "!?" 7000 Right    // null try
+        operInfo ".." 5000 Right    // range from
+        operInfo "++" 5000 Right    // inc
+        operInfo "--" 5000 Right    // dec
+        operInfo "!" 0000 Right     // not null assert
+        operInfo "!!" 0000 Right    // not null try
+        operInfo "!?" 0000 Right    // null try
     |]
     let midInfoMap = midInfos.ToDictionary(fun i -> i.Name)
     let leftInfoMap = edgeInfos.Where(function { Assoc = Left } -> true | _ -> false).ToDictionary(fun i -> i.Name)

@@ -30,3 +30,9 @@ let tryToStrMap a (p: string) (s: string) (c: string) =
         sb.Append(string i) |> ignore
     if sb.Length = 0 then "" else
     $"{p}{string sb}{s}"
+
+let inline llnTryValue (n: 'a LinkedListNode) = 
+    maybe {
+        let! a = n |> Maybe.nullable
+        a.Value
+    }
