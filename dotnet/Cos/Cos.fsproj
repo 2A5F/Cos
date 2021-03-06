@@ -4,10 +4,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Utils\Maybe.fs" />
-    <Compile Include="Utils\LinkedList.fs" />
     <Compile Include="Utils\Seq.fs" />
     <Compile Include="Utils\SrcPos.fs" />
     <Compile Include="Utils\Utils.fs" />
+    <Compile Include="Utils\LinkedList.fs" />
     <Compile Include="Utils\Sliced.fs" />
     <Compile Include="Utils\SubStr.fs" />
     <Compile Include="Scanner\Reader.fs" />

@@ -4,6 +4,10 @@ open System
 open System.Text
 open System.Collections.Generic
 
+let inline isSameObject a b = LanguagePrimitives.PhysicalEquality a b
+let inline notSameObject a b = not <| LanguagePrimitives.PhysicalEquality a b
+let inline notNull v = not <| isNull v
+
 let maybe = MaybeBuilder()
 
 type Dictionary<'K, 'V> with
@@ -31,8 +35,6 @@ let tryToStrMap a (p: string) (s: string) (c: string) =
     if sb.Length = 0 then "" else
     $"{p}{string sb}{s}"
 
-let inline llnTryValue (n: 'a LinkedListNode) = 
-    maybe {
-        let! a = n |> Maybe.nullable
-        a.Value
-    }
+let inline llnTryValue (n: 'a LinkedListNode) = if isNull n then Nil else Just n.Value
+
+let inline (|NotNull|_|) v = if isNull v then None else Some v

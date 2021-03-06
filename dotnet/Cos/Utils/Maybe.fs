@@ -38,7 +38,7 @@ type Maybe<'T> =
         | Just v -> $" {v.ToString()} "
 
 module Maybe =
-    let nullable(v: 'T) = if v = null then Nil else Just v
+    let inline nullable(v: 'T) = if isNull v then Nil else Just v
 
 type MaybeBuilder() =
     member inline _.Bind(m, f) =
