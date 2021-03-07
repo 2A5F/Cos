@@ -90,12 +90,12 @@ let internal pExprOpersEdgeDoRight (list: PCExprOper LinkedList) (node: PCExprOp
 
 let internal pExprOpersEdgeLeft (list: PCExprOper LinkedList) (node: PCExprOper LinkedListNode) (e: PExpr ref) (o: TOper) =
     match Operators.leftInfoMap.TryGet(o.Str) with
-    | Just _ -> pExprOpersEdgeDoRight list node e o
+    | Just _ -> pExprOpersEdgeDoLeft list node e o
     | Nil -> true
 
 let internal pExprOpersEdgeRight (list: PCExprOper LinkedList) (node: PCExprOper LinkedListNode) (e: PExpr ref) (o: TOper) =
     match Operators.rightInfoMap.TryGet(o.Str) with
-    | Just _ -> pExprOpersEdgeDoLeft list node e o
+    | Just _ -> pExprOpersEdgeDoRight list node e o
     | Nil -> true
 
 let internal pExprOpersEdgeBoth (list: PCExprOper LinkedList) (node: PCExprOper LinkedListNode) (e: PExpr ref) (lo: TOper) (ro: TOper) =
