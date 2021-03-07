@@ -61,117 +61,90 @@ let internal pExpr (ctx: Ctx) (tks: Tks) =
 
 type internal PCExprOper = PCExpr of PExpr | PCOper of TOper
 
-let rec internal pCollectExprOpers (ctx: Ctx) (tks: Tks) (list: PCExprOper List) =
+let rec internal pCollectExprOpers (ctx: Ctx) (tks: Tks) (list: PCExprOper LinkedList) (exprs: struct (PCExprOper LinkedListNode * PExpr ref) LinkedList) =
     match pExpr ctx tks with
     | Just (e, cr) -> 
-        list.Add(PCExpr e)
-        pCollectExprOpers ctx (tks.ByCodeRange cr) list
+        let n = list.PushLast(PCExpr e)
+        exprs.PushLast(struct (n, ref e)) |> ignore
+        pCollectExprOpers ctx (tks.ByCodeRange cr) list exprs
     | Nil ->
     match tks.First with
     | Just (Tokens.Oper o) ->
-        list.Add(PCOper o)
-        pCollectExprOpers ctx tks.Tail list
-    | _ -> (list, tks.ToCodeRange)
+        list.PushLast(PCOper o) |> ignore
+        pCollectExprOpers ctx tks.Tail list exprs
+    | _ -> (list, exprs, tks.ToCodeRange)
 
-type internal PCExprOper2 = PC2Expr of PExpr | PC2OperMid of TOper * OperInfo | PC2OperEdge of TOper * OperInfo
+let internal pExprOpersEdgeDoLeft (list: PCExprOper LinkedList) (node: PCExprOper LinkedListNode) (e: PExpr ref) (o: TOper) =
+    let ne = OperLeft <| { Oper = o; Right = !e }
+    node.RemovePrev(list) |> ignore
+    node.Value <- PCExpr ne
+    e := ne
+    false
 
-let rec internal pCollectExprOpers2 (ctx: Ctx) (list: PCExprOper List) i (list2: PCExprOper2 LinkedList) =
-    if i >= list.Count then list2 else
-    match list.[i] with
-    | PCOper o -> 
-        if (i > 1 && i < list.Count - 1 && match (list.[i - 1], list.[i + 1]) with (PCExpr _, PCExpr _) -> true | _ -> false) then
-            let info = 
-                if Operators.midCanAlone o then
-                    match Operators.midInfoMap.TryGet(o.Str) with 
-                    | Just info -> info
-                    | _ -> 
-                        ctx.Err(ParserError.UnknownOperator o)
-                        Operators.defaultInfo o.Str
-                else 
-                    ctx.Err(ParserError.IllegalAloneOperator o)
-                    Operators.defaultInfo o.Str
-            list2.PushLast(PC2OperMid (o, info)) |> ignore
-            pCollectExprOpers2 ctx list (i + 1) list2
-        else
-            todo()
-    | PCExpr e -> 
-        list2.PushLast(PC2Expr e) |> ignore
-        pCollectExprOpers2 ctx list (i + 1) list2
+let internal pExprOpersEdgeDoRight (list: PCExprOper LinkedList) (node: PCExprOper LinkedListNode) (e: PExpr ref) (o: TOper) =
+    let ne = OperRight <| { Left = !e; Oper = o }
+    node.RemoveNext(list) |> ignore
+    node.Value <- PCExpr ne
+    e := ne
+    false
 
-let rec internal pExprOpersEdgePart1 (list: PCExprOper2 LinkedList) (node: PCExprOper2 LinkedListNode) =
-    if isNull node then () else
-    match node.Value with
-    | PC2Expr e -> pExprOpersEdgePart2 list node e
-    | _ -> pExprOpersEdgePart1 list node.Next
-and internal pExprOpersEdgePart2 (list: PCExprOper2 LinkedList) (node: PCExprOper2 LinkedListNode) e =
+let internal pExprOpersEdgeLeft (list: PCExprOper LinkedList) (node: PCExprOper LinkedListNode) (e: PExpr ref) (o: TOper) =
+    match Operators.leftInfoMap.TryGet(o.Str) with
+    | Just _ -> pExprOpersEdgeDoRight list node e o
+    | Nil -> true
+
+let internal pExprOpersEdgeRight (list: PCExprOper LinkedList) (node: PCExprOper LinkedListNode) (e: PExpr ref) (o: TOper) =
+    match Operators.rightInfoMap.TryGet(o.Str) with
+    | Just _ -> pExprOpersEdgeDoLeft list node e o
+    | Nil -> true
+
+let internal pExprOpersEdgeBoth (list: PCExprOper LinkedList) (node: PCExprOper LinkedListNode) (e: PExpr ref) (lo: TOper) (ro: TOper) =
+    match Operators.leftInfoMap.TryGet(lo.Str), Operators.rightInfoMap.TryGet(ro.Str) with
+    | Just { Level = ll }, Just { Level = rl } -> 
+        if ll >= rl then pExprOpersEdgeDoRight list node e lo
+        else pExprOpersEdgeDoRight list node e ro
+    | Nil, Just _ -> pExprOpersEdgeDoRight list node e ro
+    | Just _, Nil -> pExprOpersEdgeDoLeft list node e lo
+    | _ -> true
+
+let internal pExprOpersEdgeBody (list: PCExprOper LinkedList) (node: PCExprOper LinkedListNode) (e: PExpr ref) =
     match llnTryValue node.Prev, llnTryValue node.Next with
-    | Just (PC2OperEdge (lo, { Level = ll; Assoc = Left })), Just (PC2OperEdge (_, { Level = rl; Assoc = Right })) when ll >= rl -> 
-        let ne = OperLeft <| { Oper = lo; Right = e } 
-        node.RemovePrev(list) |> ignore
-        node.Value <- PC2Expr ne
-        pExprOpersEdgePart2 list node ne
-    | Just (PC2OperEdge (_, { Level = ll; Assoc = Left })), Just (PC2OperEdge (ro, { Level = rl; Assoc = Right })) when ll < rl -> 
-        let ne = OperRight <| { Left = e; Oper = ro } 
-        node.RemoveNext(list) |> ignore
-        node.Value <- PC2Expr ne
-        pExprOpersEdgePart2 list node ne
-    | Just (PC2OperEdge (lo, { Assoc = Left })), _ -> 
-        let ne = OperLeft <| { Oper = lo; Right = e } 
-        node.Value <- PC2Expr ne
-        pExprOpersEdgePart2 list node ne
-    | _, Just (PC2OperEdge (ro, { Assoc = Right })) ->
-        let ne = OperRight <| { Left = e; Oper = ro } 
-        node.Value <- PC2Expr ne
-        pExprOpersEdgePart2 list node ne
-    | _ -> pExprOpersEdgePart1 list node.Next
+    | Just (PCOper lo), Just (PCOper ro) -> // 1 + 1
+        match llnTryValue node.Prev.Prev, llnTryValue node.Next.Next with
+        | Just (PCExpr _), Just (PCExpr _) -> true
+        | _, Just (PCExpr _) -> pExprOpersEdgeLeft list node e lo
+        | Just (PCExpr _), _ -> pExprOpersEdgeRight list node e ro
+        | _ -> pExprOpersEdgeBoth list node e lo ro
+    | _, Just (PCOper ro) -> 
+        match llnTryValue node.Next.Next with
+        | Just (PCExpr _) -> true
+        | _ -> pExprOpersEdgeRight list node e ro
+    | Just (PCOper lo), _ -> 
+        match llnTryValue node.Prev.Prev with
+        | Just (PCExpr _) -> true
+        | _ -> pExprOpersEdgeLeft list node e lo
+    | _ -> true
 
-type internal PCExprOper3 = PC3Expr of PExpr | PC3Oper of TOper * OperInfo
+let rec internal pExprOpersEdge (list: PCExprOper LinkedList) (exprs: struct (PCExprOper LinkedListNode * PExpr ref) LinkedList) (n: struct (PCExprOper LinkedListNode * PExpr ref) LinkedListNode) = 
+    if exprs.IsEmpty then () else
+    if isNull n then pExprOpersEdge list exprs exprs.First else
+    let struct (node, e) = n.Value
+    if pExprOpersEdgeBody list node e then 
+        let next = n.Next
+        n.Remove(exprs)
+        pExprOpersEdge list exprs next
+    else pExprOpersEdge list exprs n.Next
 
-let internal pExprOpersClean (ctx: Ctx) (list1: PCExprOper2 LinkedList) (list2: PCExprOper3 LinkedList) =
-    for i in list1 do
-        match i with
-        | PC2Expr e -> list2.PushLast(PC3Expr e) |> ignore
-        | PC2OperMid (o, i) -> list2.PushLast(PC3Oper (o, i)) |> ignore
-        | PC2OperEdge (o, _) -> ctx.Err(IllegalEdgeOperator o)
+type internal PCExprOper2 = PC2Expr of PExpr | PC2Oper of TOper * OperInfo
+
+let rec internal pExprOpersClean (ctx: Ctx) (list: PCExprOper LinkedList) (list2: PCExprOper2 LinkedList) =
     list2
 
-let rec internal pExprOpersMid (ctx: Ctx) (list: PCExprOper3 LinkedList) (node: PCExprOper3 LinkedListNode) =
-    todo()
-
-//let rec internal pExprOpersStart (ctx: Ctx) (list: PCExprOper2 LinkedList) (node: PCExprOper2 LinkedListNode) =
-//    match node.Value with
-//    | PC2OperMid (o, { Level = level; Assoc = Left }) -> 
-//        let leftOper = llnTryValue node.Prev.Prev
-//        let rightOper = llnTryValue node.Next.Next
-//        match leftOper with
-//        | Just (PC2OperMid (_, { Level = ll })) when ll > level -> pExprOpersStart ctx list node.Next
-//        | Just (PC2OperMid (_, { Level = ll; Assoc = Left })) when ll = level -> pExprOpersStart ctx list node.Next
-//        | _ -> todo()
-        
-//    | PC2OperMid (o, { Level = level; Assoc = Right }) -> 
-//        todo()
-//    | PC2OperEdge (o, info, Left) -> 
-//        todo()
-//    | PC2OperEdge (o, info, Right) -> 
-//        todo()
-//    | PC2Expr e ->
-//        if node.HasNext then pExprOpersStart ctx list node.Next else 
-//        if node.HasPrev then pExprOpersStart ctx list list.First else e
-
-let inline internal pExprOpersTakeFirst (ctx: Ctx) (l: PCExprOper3 LinkedList) (cr: CodeRange) =
-    match l.First.Value with
-    | PC3Expr e -> Just (e, cr)
-    | PC3Oper (_, _) -> raise <| ParserException(InternalError "pExprOpersTakeFirst")
-
 let internal pExprOpers (ctx: Ctx) (tks: Tks) = 
-    let (eos, cr) = pCollectExprOpers ctx tks (List())
+    let (eos, exprs, cr) = pCollectExprOpers ctx tks (LinkedList()) (LinkedList())
     if eos.Count = 0 then Nil else
-    let eos = pCollectExprOpers2 ctx eos 0 (LinkedList())
-    pExprOpersEdgePart1 eos eos.First
+    pExprOpersEdge eos exprs exprs.First
     let eos = pExprOpersClean ctx eos (LinkedList())
-    if eos.IsEmpty then raise <| ParserException(InternalError "pExprOpers")
-    if eos.IsOnlyOne then pExprOpersTakeFirst ctx eos cr else
-    let r = pExprOpersMid ctx eos eos.First
     todo()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
