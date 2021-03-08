@@ -12,4 +12,3 @@ type ParserError =
 | UnknownOperator of TOper
 | IllegalAloneOperator of TOper
 | IllegalEdgeOperator of TOper
-

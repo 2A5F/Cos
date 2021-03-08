@@ -16,7 +16,7 @@ let Setup () =
 
 [<Test>]
 let Test1 () =
-    let code = "+ 1 + 1"
+    let code = "..1 .."
     let tks = scan code
     let r = parser (tks.ToArray())
     ()
