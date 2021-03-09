@@ -97,6 +97,7 @@ break a;
 continue;
 return;
 return a;
+=> a; // 等价于 return，后面必须跟表达式
 ```
 
 带标签情况
@@ -290,6 +291,8 @@ var c = c'a'; // 前缀 c 是字符
 ```
 
 ### 对象
+
+对象字面量不能直接作为返回值，需要包在 () 内 或者使用 return  
 
 ```js
 var o: { a: int, b: int } = {
