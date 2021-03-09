@@ -518,7 +518,7 @@ module foo {
 
 模块可以标注实现接口
 
-在文件头使用不带名字的 module 来指示文件实现的接口，文件模块标注应该在所有其他东西之前
+在文件头使用不带名字的 module 来指示文件实现的接口，文件模块标注应该在所有 import 之前，在所有 export 和 非文件头之前  
 
 ```ocaml
 module : bar;
@@ -552,3 +552,8 @@ export _.a.b.c; // 开头为 _ 表示当前根目录
 ```js
 export var a = 1;
 ```
+
+### 文件头
+
+文件头可以包含 import export module 
+
