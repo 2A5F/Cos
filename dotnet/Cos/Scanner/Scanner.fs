@@ -411,12 +411,12 @@ and internal blockBodyLoop (ctx: Ctx) (code: Code) close =
     | _ ->
     raise <| ScannerException(UnknownSymbol <| ctx.pos.[code.offset])
 
-and inline internal blockBody (ctx: Ctx) (code: Code) close typ =
+and internal blockBody (ctx: Ctx) (code: Code) close typ =
     let tokens = ctx.tokens
     ctx.tokens <- List()
     let struct(rloc, r) = blockBodyLoop ctx code.Tail close
     let lloc = ctx.Loc (code.CodeRangeTo 1)
-    let bl = TBlock.New(typ, lloc, rloc, tokens.ToArray())
+    let bl = TBlock.New(typ, lloc, rloc, ctx.tokens.ToArray())
     ctx.tokens <- tokens
     tokens.Add(Tokens.Block bl)
     Just r
@@ -447,7 +447,7 @@ and internal strPartBlock (ctx: Ctx) (code: Code) (items: TStrPart List) =
     ctx.tokens <- List()
     let struct(rloc, r) = blockBodyLoop ctx code.[2..] '}' 
     let lloc = ctx.Loc (code.CodeRangeTo 2)
-    let block = TBlock.New(BracketsType.Curly, lloc, rloc, tokens.ToArray())
+    let block = TBlock.New(BracketsType.Curly, lloc, rloc, ctx.tokens.ToArray())
     ctx.tokens <- tokens
     let tbl = { Dollar = dollar; Block = block }
     items.Add(Block tbl)
