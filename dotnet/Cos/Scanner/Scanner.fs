@@ -135,8 +135,7 @@ let rec internal numSuffix (ctx: Ctx) (code: Code) prefix f e i illegal =
         let range = code.CodeRange(e, i)
         let loc = ctx.Loc range
         let str = ctx.SubStr range
-        let tk = Token.New(str, loc)
-        numFinish ctx code prefix (Just <| TId.ID tk) f e i illegal
+        numFinish ctx code prefix (Just <| TId.New(str, loc)) f e i illegal
 
 let rec internal numBodyBinary (ctx: Ctx) (code: Code) prefix f i first illegal =
     match code.[i] with

@@ -34,8 +34,8 @@ let internal endLocOf (tks: Tks) = match tks.Last with Just t -> t.Loc | Nil -> 
 
 let internal pBool (tks: Tks) =
     match tks.First with
-    | Just (Tokens.ID (v & (Key (KeyWord.True, _)))) -> Just struct (True v |> Bool |> Just, tks.CodeRangeTail)
-    | Just (Tokens.ID (v & (Key (KeyWord.False, _)))) -> Just struct (False v |> Bool |> Just, tks.CodeRangeTail)
+    | Just (Tokens.ID (v & { Id = Key KeyWord.True })) -> Just struct (True v |> Bool |> Just, tks.CodeRangeTail)
+    | Just (Tokens.ID (v & { Id = Key KeyWord.False })) -> Just struct (False v |> Bool |> Just, tks.CodeRangeTail)
     | _ -> Nil
 
 let internal pNum (ctx: Ctx) (tks: Tks) =

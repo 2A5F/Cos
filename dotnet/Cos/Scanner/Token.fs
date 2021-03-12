@@ -98,37 +98,39 @@ type Token =
 
     override self.ToString() = self.Str.ToString()
 
+[<Struct; IsReadOnly;>]
+type TIdContent =
+    | ID of str: string
+    | Key of key: KeyWord
+
 [<Struct; IsReadOnly; DebuggerDisplay(@"TID \{ {ToString(),nq} \}")>]
 type TId =
-    | ID of Token
-    | Key of KeyWord * Loc
+    {
+        Id: TIdContent
+        Loc: Loc
+    }
 
-    static member New(str: SubStr, loc) =
+    static member New(str: SubStr, loc): TId =
         match SubStrToEnum.TryGet str with
-        | Just k -> Key(k, loc)
-        | Nil -> ID(Token.New(str, loc))
+        | Just k -> { Id = Key k; Loc = loc }
+        | Nil -> { Id = ID <| System.String.Intern(str.ToString()); Loc = loc }
 
     override self.ToString() =
-        match self with
-        | ID t -> t.ToString()
-        | Key (k, _) -> KeyWords.EnumToStr.[k]
+        match self.Id with
+        | ID s -> s
+        | Key k -> KeyWords.EnumToStr.[k]
 
     member inline self.Str = self.ToString()
 
-    member self.Loc =
-        match self with
-        | ID v -> v.Loc
-        | Key (_, v) -> v
-
     member self.IsIdAllowed =
-        match self with
+        match self.Id with
         | ID _ -> true
-        | Key (k, _) -> KeyWords.idAllowed k
+        | Key k -> KeyWords.idAllowed k
 
     member self.IsKeyOf key =
-        match self with
+        match self.Id with
         | ID _ -> false
-        | Key (k, _) -> k = key
+        | Key k -> k = key
 
 /// <summary> <code>;</code> </summary>
 [<Struct; IsReadOnly>]
