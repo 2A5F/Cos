@@ -48,10 +48,7 @@ let rec internal idBody (ctx: Ctx) (code: Code) i =
     let range = code.CodeRangeTo i
     let loc = ctx.Loc range
     let str = ctx.SubStr range
-    let id = 
-        match SubStrToEnum.TryGet str with
-        | Just k -> Key(k, loc)
-        | Nil -> ID(Token.New(str, loc))
+    let id = TId.New(str, loc)
     ctx.tokens.Add(Tokens.ID id)
     Just <| code.CodeRangeFrom i
 
@@ -119,7 +116,7 @@ let inline internal isNumHexBody c = (c = '_') || (c >= 'a' && c <= 'f') || (c >
 let inline internal isNumBinaryBody c = match c with '_' | '0' | '1'  -> true | _ -> false
 let inline internal isNumBinaryIllegal c = (c >= '2' && c <= '9')
 
-let inline internal numFinish (ctx: Ctx) (code: Code) prefix suffxi dot f e i illegal =
+let inline internal numFinish (ctx: Ctx) (code: Code) prefix suffxi f e i illegal =
     let range = code.CodeRange(f, e)
     let loc = ctx.Loc range
     let fuloc = Loc.OfMP prefix suffxi loc
@@ -127,51 +124,42 @@ let inline internal numFinish (ctx: Ctx) (code: Code) prefix suffxi dot f e i il
     else 
         let str = ctx.SubStr range
         let tk = Token.New(str, loc)
-        let num = TNum(tk, prefix, suffxi, dot, fuloc)
+        let num = TNum(tk, prefix, suffxi, fuloc)
         ctx.tokens.Add(Num num)
     Just <| code.CodeRangeFrom i
 
-let rec internal numSuffix (ctx: Ctx) (code: Code) prefix dot f e i illegal =
+let rec internal numSuffix (ctx: Ctx) (code: Code) prefix f e i illegal =
     match code.[i] with
-    | Just c when isIdBody c -> numSuffix ctx code prefix dot f e (i + 1) illegal
+    | Just c when isIdBody c -> numSuffix ctx code prefix f e (i + 1) illegal
     | _ ->
         let range = code.CodeRange(e, i)
         let loc = ctx.Loc range
         let str = ctx.SubStr range
         let tk = Token.New(str, loc)
-        numFinish ctx code prefix (Just tk) dot f e i illegal
+        numFinish ctx code prefix (Just <| TId.ID tk) f e i illegal
 
 let rec internal numBodyBinary (ctx: Ctx) (code: Code) prefix f i first illegal =
     match code.[i] with
-    | Just '.' -> numBodyBinary ctx code prefix f (i + 1) false true
     | Just c when isNumBinaryBody c -> numBodyBinary ctx code prefix f (i + 1) false illegal
     | Just c when isNumBinaryIllegal c -> numBodyBinary ctx code prefix f (i + 1) false true
-    | Just c when isIdFirst c -> numSuffix ctx code (Just prefix) false f i (i + 1) illegal
+    | Just c when isIdFirst c -> numSuffix ctx code (Just prefix) f i (i + 1) illegal
     | _ -> 
     if first then ctx.errs.Add(UnknownSymbol ctx.pos.[code.RawIndex i])
-    numFinish ctx code (Just prefix) Nil false f i i illegal
+    numFinish ctx code (Just prefix) Nil f i i illegal
 
 let rec internal numBodyHex (ctx: Ctx) (code: Code) prefix f i first illegal =
     match code.[i] with
-    | Just '.' -> numBodyHex ctx code prefix f (i + 1) false true
     | Just c when isNumHexBody c -> numBodyHex ctx code prefix f (i + 1) false illegal
-    | Just c when isIdFirst c -> numSuffix ctx code (Just prefix) false f i (i + 1) illegal
+    | Just c when isIdFirst c -> numSuffix ctx code (Just prefix) f i (i + 1) illegal
     | _ -> 
     if first then ()
-    numFinish ctx code (Just prefix) Nil false f i i illegal
-
-let rec internal numBodyDecimal (ctx: Ctx) (code: Code) i =
-    match code.[i] with
-    | Just c when isNumBody c -> numBodyDecimal ctx code (i + 1)
-    | Just c when isIdFirst c -> numSuffix ctx code Nil true 0 i (i + 1) false
-    | _ -> numFinish ctx code Nil Nil true 0 i i false
+    numFinish ctx code (Just prefix) Nil f i i illegal
 
 let rec internal numBody (ctx: Ctx) (code: Code) i =
     match code.[i] with
-    | Just '.' -> numBodyDecimal ctx code (i + 1)
     | Just c when isNumBody c -> numBody ctx code (i + 1)
-    | Just c when isIdFirst c -> numSuffix ctx code Nil false 0 i (i + 1) false
-    | _ -> numFinish ctx code Nil Nil false 0 i i false
+    | Just c when isIdFirst c -> numSuffix ctx code Nil 0 i (i + 1) false
+    | _ -> numFinish ctx code Nil Nil 0 i i false
 
 let internal numZeroFirst (ctx: Ctx) (code: Code) =
     match code.[1] with
@@ -187,10 +175,9 @@ let internal numZeroFirst (ctx: Ctx) (code: Code) =
         let str = ctx.SubStr range
         let tk = Token.New(str, loc)
         numBodyBinary ctx code tk 2 2 true false
-    | Just '.' -> numBodyDecimal ctx code 2
     | Just c when isNumBody c -> numBody ctx code 2
-    | Just c when isIdFirst c -> numSuffix ctx code Nil false 0 2 2 false
-    | _ -> numFinish ctx code Nil Nil false 0 1 1 false
+    | Just c when isIdFirst c -> numSuffix ctx code Nil 0 2 2 false
+    | _ -> numFinish ctx code Nil Nil 0 1 1 false
 
 let internal num (ctx: Ctx) (code: Code) =
     match code.First with

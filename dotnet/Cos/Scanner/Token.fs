@@ -3,8 +3,10 @@ namespace rec Volight.Cos.Parser
 open System.Runtime.CompilerServices
 open Volight.Cos.SrcPos
 open Volight.Cos.Utils
+open Volight.Cos.Utils.Utils
 open System.Diagnostics
 open System.Text
+open KeyWords
 
 type Tokens =
     | ID of TId
@@ -101,6 +103,11 @@ type TId =
     | ID of Token
     | Key of KeyWord * Loc
 
+    static member New(str: SubStr, loc) =
+        match SubStrToEnum.TryGet str with
+        | Just k -> Key(k, loc)
+        | Nil -> ID(Token.New(str, loc))
+
     override self.ToString() =
         match self with
         | ID t -> t.ToString()
@@ -192,15 +199,13 @@ type TAt =
 type TNum =
     val Num: Token
     val Prefix: Token Maybe
-    val Suffix: Token Maybe
-    val Dot: bool
+    val Suffix: TId Maybe
     val Loc: Loc
 
-    new(num, prefix, suffix, dot, loc) =
+    new(num, prefix, suffix, loc) =
         { Num = num
           Prefix = prefix
           Suffix = suffix
-          Dot = dot
           Loc = loc }
 
     override self.ToString() =
