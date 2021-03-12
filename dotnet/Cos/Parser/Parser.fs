@@ -38,9 +38,23 @@ let internal pBool (tks: Tks) =
     | Just (Tokens.ID (v & (Key (KeyWord.False, _)))) -> Just struct (False v |> Bool |> Just, tks.CodeRangeTail)
     | _ -> Nil
 
-let internal pNum (tks: Tks) =
+let internal pNum (ctx: Ctx) (tks: Tks) =
     match tks.First with
-    | Just (Tokens.Num n) -> Just struct (Num n |> Just, tks.CodeRangeTail)
+    | Just (Tokens.Num n) -> 
+        match n.Suffix with
+        | Just _ -> Just struct (PNum.New(n) |> Num |> Just, tks.CodeRangeTail)
+        | Nil ->
+            match tks.[1] with
+            | Just (Tokens.Oper (o & { Str = "." })) ->
+                match tks.[2] with
+                | Just (Tokens.Num d) -> 
+                    match n.Prefix with
+                    | Just _ -> 
+                        ctx.Err(IllegalFloatingNumber(n, o, d))
+                        Just struct (PNum.New(n) |> Num |> Just, tks.CodeRangeTail)
+                    | Nil -> Just struct (PNum.New(n, o, d) |> Num |> Just, tks.CodeRangeFrom 3)
+                | _ -> Just struct (PNum.New(n) |> Num |> Just, tks.CodeRangeTail)
+            | _ -> Just struct (PNum.New(n) |> Num |> Just, tks.CodeRangeTail)
     | _ -> Nil
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -50,7 +64,7 @@ let internal pExpr (ctx: Ctx) (tks: Tks) =
         match pBool tks with
         | Just r -> r
         | Nil -> 
-        match pNum tks with
+        match pNum ctx tks with
         | Just r -> r
         | Nil -> 
         (Nil, tks.ToCodeRange)

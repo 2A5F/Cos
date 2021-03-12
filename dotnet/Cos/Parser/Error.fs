@@ -12,3 +12,4 @@ type ParserError =
 | UnknownOperator of TOper
 | IllegalAloneOperator of TOper
 | IllegalEdgeOperator of TOper
+| IllegalFloatingNumber of TNum * TOper * TNum

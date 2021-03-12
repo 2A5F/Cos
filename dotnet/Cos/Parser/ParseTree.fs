@@ -505,6 +505,27 @@ type PBool =
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+type PNum =
+    {
+        Int: TNum
+        Num: PDecimal Maybe
+    }
+
+    static member New(int) = { Int = int; Num = Nil }
+    static member New(int, dot, num) = { Int = int; Num = Just { Dot = dot; Num = num } }
+
+    override self.ToString() = $"{self.Int}{self.Num.TryToStr}"
+
+type PDecimal =
+    {
+        Dot: TOper
+        Num: TNum
+    }
+
+    override self.ToString() = $".{self.Num}"
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 type PStr =
     { Left: Loc
       Right: Loc
@@ -1113,7 +1134,7 @@ type PExpr =
     | BlockFn of PExprBlockFn
     | TailFn of PTailFn
     | Bool of PBool
-    | Num of TNum
+    | Num of PNum
     | Str of PStr
     | Obj of PObj
     | Arr of PArr

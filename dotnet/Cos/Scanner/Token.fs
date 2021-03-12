@@ -184,7 +184,7 @@ type TOper =
     { Str: string
       Loc: Loc }
 
-    static member New(str, loc) = { Str = str; Loc = loc }
+    static member New(str, loc) = { Str = System.String.Intern(str); Loc = loc }
 
     override self.ToString() = self.Str
 
