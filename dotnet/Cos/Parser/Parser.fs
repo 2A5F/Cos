@@ -57,6 +57,11 @@ let internal pNum (ctx: Ctx) (tks: Tks) =
             | _ -> Just struct (PNum.New(n) |> Num |> Just, tks.CodeRangeTail)
     | _ -> Nil
 
+let internal pId (tks: Tks) =
+    match tks.First with
+    | Just (Tokens.ID v) when v.IsIdAllowed -> Just struct (PExpr.Id v |> Just, tks.CodeRangeTail)
+    | _ -> Nil
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 let internal pExpr (ctx: Ctx) (tks: Tks) = 
@@ -67,6 +72,9 @@ let internal pExpr (ctx: Ctx) (tks: Tks) =
         match pNum ctx tks with
         | Just r -> r
         | Nil -> 
+        match pId tks with
+        | Just r -> r
+        | Nil ->
         (Nil, tks.ToCodeRange)
     match e with
     | Nil -> Nil

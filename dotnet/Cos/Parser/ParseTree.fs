@@ -1118,6 +1118,8 @@ type PType =
 
 type PExpr =
     | Id of TId
+    | Me of TId
+    | TMe of TId
     | If of PIf
     | Case of PCase
     | While of PWhile
