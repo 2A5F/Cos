@@ -110,6 +110,7 @@ type TId =
         Loc: Loc
     }
 
+    static member New(key: KeyWord, loc): TId = { Id = Key <| key; Loc = loc }
     static member New(str: SubStr, loc): TId =
         match SubStrToEnum.TryGet str with
         | Just k -> { Id = Key k; Loc = loc }

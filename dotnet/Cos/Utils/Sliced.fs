@@ -75,3 +75,29 @@ module SlicedEx =
         member self.AsSliced() = self.AsSpan().ToSliced()
         member self.AsSliced(start) = self.AsSpan().ToSliced().Slice(start)
         member self.AsSliced(start, ``end``) = self.AsSpan().ToSliced().Slice(start, ``end``)
+
+
+type SlicedFunc<'S, 'R> =
+    abstract member Invoke: slice: Sliced<'S> -> 'R
+
+type SlicedFunc<'S, 'A, 'R> =
+    abstract member Invoke: slice: Sliced<'S> * a: 'A -> 'R
+
+type SlicedFunc<'S, 'A, 'B, 'R> =
+    abstract member Invoke: slice: Sliced<'S> * a: 'A * b: 'B -> 'R
+
+type SlicedFunc<'S, 'A, 'B, 'C, 'R> =
+    abstract member Invoke: slice: Sliced<'S> * a: 'A * b: 'B * c: 'C -> 'R
+
+
+type SlicedAction<'S> =
+    abstract member Invoke: slice: Sliced<'S> -> unit
+
+type SlicedAction<'S, 'A> =
+    abstract member Invoke: slice: Sliced<'S> * a: 'A -> unit
+
+type SlicedAction<'S, 'A, 'B> =
+    abstract member Invoke: slice: Sliced<'S> * a: 'A * b: 'B -> unit
+
+type SlicedAction<'S, 'A, 'B, 'C> =
+    abstract member Invoke: slice: Sliced<'S> * a: 'A * b: 'B * c: 'C -> unit

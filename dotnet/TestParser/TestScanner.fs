@@ -20,7 +20,7 @@ let TestId1 () =
     let code = "asd"
     let r = scan code
     let a = r.[0]
-    let e = Tokens.ID <| TId.ID(Token.New(SubStr(code, CodeRange.OfV 0 3), Loc.OfV 0u 0u 0u 2u))
+    let e = Tokens.ID <| TId.New(SubStr(code, CodeRange.OfV 0 3), Loc.OfV 0u 0u 0u 2u)
     Assert.AreEqual(e, a)
     Assert.AreEqual(e.Loc, a.Loc)
     ()
@@ -37,7 +37,7 @@ let TestId2 () =
     let code = "else"
     let r = scan code
     let a = r.[0]
-    let e = Tokens.ID <| TId.Key(KeyWord.Else, Loc.OfV 0u 0u 0u 3u)
+    let e = Tokens.ID <| TId.New(KeyWord.Else, Loc.OfV 0u 0u 0u 3u)
     Assert.AreEqual(e, a)
     Assert.AreEqual(e.Loc, a.Loc)
     ()
@@ -48,8 +48,8 @@ let TestIdSpace () =
     let r = scan code
     let a1 = r.[0]
     let a2 = r.[1]
-    let e1 = Tokens.ID <| TId.ID(Token.New(SubStr(code, CodeRange.OfV 0 3), Loc.OfV 0u 0u 0u 2u))
-    let e2 = Tokens.ID <| TId.Key(KeyWord.Else, Loc.OfV 0u 4u 0u 7u)
+    let e1 = Tokens.ID <| TId.New(SubStr(code, CodeRange.OfV 0 3), Loc.OfV 0u 0u 0u 2u)
+    let e2 = Tokens.ID <| TId.New(KeyWord.Else, Loc.OfV 0u 4u 0u 7u)
     Assert.AreEqual(e1, a1)
     Assert.AreEqual(e1.Loc, a1.Loc)
     Assert.AreEqual(e2, a2)
@@ -102,7 +102,7 @@ let TestNum5 () =
     let code = "123u8"
     let r = scan code
     let a = r.[0]
-    let suffix = TId.ID <| Token.New(SubStr(code, CodeRange.OfV 3 5), Loc.OfV 0u 3u 0u 4u)
+    let suffix = TId.New(SubStr(code, CodeRange.OfV 3 5), Loc.OfV 0u 3u 0u 4u)
     let e = Tokens.Num <| TNum(Token.New(SubStr(code, CodeRange.OfV 0 3), Loc.OfV 0u 0u 0u 2u), Nil, Just suffix, Loc.OfV 0u 0u 0u 4u)
     Assert.AreEqual(e, a)
     Assert.AreEqual(e.Loc, a.Loc)
@@ -113,7 +113,7 @@ let TestNum6 () =
     let code = "000u8"
     let r = scan code
     let a = r.[0]
-    let suffix = TId.ID <| Token.New(SubStr(code, CodeRange.OfV 3 5), Loc.OfV 0u 3u 0u 4u)
+    let suffix = TId.New(SubStr(code, CodeRange.OfV 3 5), Loc.OfV 0u 3u 0u 4u)
     let e = Tokens.Num <| TNum(Token.New(SubStr(code, CodeRange.OfV 0 3), Loc.OfV 0u 0u 0u 2u), Nil, Just suffix, Loc.OfV 0u 0u 0u 4u)
     Assert.AreEqual(e, a)
     Assert.AreEqual(e.Loc, a.Loc)
@@ -125,7 +125,7 @@ let TestNum7 () =
     let r = scan code
     let a = r.[0]
     let prefix = Token.New(SubStr(code, CodeRange.OfV 0 2), Loc.OfV 0u 0u 0u 1u)
-    let suffix = TId.ID <| Token.New(SubStr(code, CodeRange.OfV 6 8), Loc.OfV 0u 6u 0u 7u)
+    let suffix = TId.New(SubStr(code, CodeRange.OfV 6 8), Loc.OfV 0u 6u 0u 7u)
     let e = Tokens.Num <| TNum(Token.New(SubStr(code, CodeRange.OfV 2 6), Loc.OfV 0u 2u 0u 5u), Just prefix, Just suffix, Loc.OfV 0u 0u 0u 7u)
     Assert.AreEqual(e, a)
     Assert.AreEqual(e.Loc, a.Loc)
@@ -159,7 +159,7 @@ let TestBlock2 () =
     let r = scan code
     let a = r.[0]
     let a = a.GetBlock
-    let e = TBlock.New(BracketsType.Curly, Loc.OfV 0u 0u 0u 0u, Loc.OfV 0u 6u 0u 6u, [| Tokens.ID <| TId.ID(Token.New(SubStr(code, CodeRange.OfV 2 5), Loc.OfV 0u 2u 0u 4u)) |])
+    let e = TBlock.New(BracketsType.Curly, Loc.OfV 0u 0u 0u 0u, Loc.OfV 0u 6u 0u 6u, [| Tokens.ID <| TId.New(SubStr(code, CodeRange.OfV 2 5), Loc.OfV 0u 2u 0u 4u) |])
     Assert.AreEqual(e.Type, a.Type)
     Assert.AreEqual(e.Left, a.Left)
     Assert.AreEqual(e.Right, a.Right)
@@ -172,7 +172,7 @@ let TestBlock3 () =
     let r = scan code
     let a = r.[0]
     let a = a.GetBlock
-    let e = TBlock.New(BracketsType.Round, Loc.OfV 0u 0u 0u 0u, Loc.OfV 0u 6u 0u 6u,[| Tokens.ID <| TId.ID(Token.New(SubStr(code, CodeRange.OfV 2 5), Loc.OfV 0u 2u 0u 4u)) |])
+    let e = TBlock.New(BracketsType.Round, Loc.OfV 0u 0u 0u 0u, Loc.OfV 0u 6u 0u 6u,[| Tokens.ID <| TId.New(SubStr(code, CodeRange.OfV 2 5), Loc.OfV 0u 2u 0u 4u) |])
     Assert.AreEqual(e.Type, a.Type)
     Assert.AreEqual(e.Left, a.Left)
     Assert.AreEqual(e.Right, a.Right)
