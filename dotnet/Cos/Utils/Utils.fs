@@ -38,3 +38,8 @@ let tryToStrMap a (p: string) (s: string) (c: string) =
 let inline llnTryValue (n: 'a LinkedListNode) = if isNull n then Nil else Just n.Value
 
 let inline (|NotNull|_|) v = if isNull v then None else Some v
+
+let inline appF (list: ('a -> 'a) list) a = 
+    let mutable v = a
+    for i in list do v <- i v
+    v

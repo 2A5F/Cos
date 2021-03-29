@@ -1,4 +1,4 @@
-module Volight.Cos.Parser.Parser
+module rec Volight.Cos.Parser.Parser
 
 open System
 open System.Collections.Generic
@@ -60,6 +60,19 @@ let internal pNum (ctx: Ctx) (tks: Tks) =
 let internal pId (tks: Tks) =
     match tks.First with
     | Just (Tokens.ID v) when v.IsIdAllowed -> Just struct (PExpr.Id v |> Just, tks.CodeRangeTail)
+    | _ -> Nil
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+let internal pBreak (ctx: Ctx) (tks: Tks) =
+    match tks.First with
+    | Just (Tokens.ID (v & { Id = Key KeyWord.Break })) -> 
+        let tailRange = tks.CodeRangeTail
+        let pBreakThen r =
+            match r with 
+            | Just (e, r) -> Just (Break <| { TBreak = v; Label = Nil; Expr = Just e }, r)
+            | Nil -> Just (Break <| { TBreak = v; Label = Nil; Expr = Nil }, tailRange)
+        pExprOpersThen ctx tks.Tail pBreakThen
     | _ -> Nil
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -210,13 +223,16 @@ and internal pExprOpersMidReduce (list: PCExprOper2 LinkedList) (node: PCExprOpe
     pExprOpersMid list node.Next
 
 
-let internal pExprOpers (ctx: Ctx) (tks: Tks) = 
+let internal pExprOpersThen (ctx: Ctx) (tks: Tks) (thenf: (PExpr * CodeRange) Maybe -> (PExpr * CodeRange) Maybe) = 
     let (eos, exprs, cr) = pCollectExprOpers ctx tks (LinkedList()) (LinkedList())
     if eos.Count = 0 then Nil else
     pExprOpersEdge eos exprs exprs.First
     let eos = pExprOpersClean ctx eos (LinkedList())
     let r = pExprOpersMid eos eos.First
-    Just (r, cr)
+    thenf <| Just (r, cr)
+
+let internal pExprOpers (ctx: Ctx) (tks: Tks) = 
+    pExprOpersThen ctx tks Operators.id
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
