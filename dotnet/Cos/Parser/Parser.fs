@@ -14,9 +14,10 @@ open Volight.Cos.Parser.KeyWords
 type internal Tks = Tokens Sliced
 
 type internal CtxRef =
+    val raw: Tokens []
     val errs: ParserError List
     val endloc: Loc
-    new(endloc) = { errs = List(); endloc =endloc }
+    new(raw, endloc) = { raw = raw; errs = List(); endloc =endloc }
     member self.ToCtx = Ctx(self, self.endloc)
 
 and internal Ctx =
@@ -64,14 +65,15 @@ let internal pId (tks: Tks) =
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-let internal pBreak (ctx: Ctx) (tks: Tks) =
+let internal pBreak (ctx: Ctx) (tks: Tks) (thenf: pExprRet -> pExprRet) =
     match tks.First with
     | Just (Tokens.ID (v & { Id = Key KeyWord.Break })) -> 
         let tailRange = tks.CodeRangeTail
         let pBreakThen r =
-            match r with 
+            (match r with 
             | Just (e, r) -> Just (Break <| { TBreak = v; Label = Nil; Expr = Just e }, r)
-            | Nil -> Just (Break <| { TBreak = v; Label = Nil; Expr = Nil }, tailRange)
+            | Nil -> Just (Break <| { TBreak = v; Label = Nil; Expr = Nil }, tailRange))
+            |> thenf
         pExprOpersThen ctx tks.Tail pBreakThen
     | _ -> Nil
 
@@ -79,23 +81,24 @@ let internal pBreak (ctx: Ctx) (tks: Tks) =
 
 type internal pExprRet = (PExpr * CodeRange) Maybe
 
-let internal pExpr (ctx: Ctx) (tks: Tks) (thenf: SlicedFunc<Tokens, pExprRet, pExprRet>) = 
-    let struct (e, cr) = 
-        match pBool tks with
-        | Just r -> r
-        | Nil -> 
-        match pNum ctx tks with
-        | Just r -> r
-        | Nil -> 
-        match pId tks with
-        | Just r -> r
-        | Nil ->
-        (Nil, tks.ToCodeRange)
-    let r = 
+let internal pExprFinish (tks: Tks) (thenf: SlicedFunc<Tokens, pExprRet, pExprRet>) e cr =
+    let r =
         match e with
         | Nil -> Nil
         | Just e -> Just (e, cr)
     thenf.Invoke(tks, r)
+
+let internal pExpr (ctx: Ctx) (tks: Tks) (thenf: SlicedFunc<Tokens, pExprRet, pExprRet>) = 
+    match pBool tks with
+    | Just (e, cr) -> pExprFinish tks thenf e cr
+    | Nil -> 
+    match pNum ctx tks with
+    | Just (e, cr) -> pExprFinish tks thenf e cr
+    | Nil -> 
+    match pId tks with
+    | Just (e, cr) -> pExprFinish tks thenf e cr
+    | Nil ->
+    pExprFinish tks thenf Nil tks.ToCodeRange
 
 type internal PCExprOper = PCExpr of PExpr | PCOper of TOper
 
@@ -256,7 +259,7 @@ let internal root (ctx: Ctx) (tks: Tks) =
 
 let parser (tks: Tokens []) =
     let span = tks.AsSliced()
-    let ctx = CtxRef(endLocOf span)
+    let ctx = CtxRef(tks, endLocOf span)
     let r = 
         try root ctx.ToCtx span with 
         | ParserException(k) -> 
