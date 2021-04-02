@@ -25,7 +25,9 @@ and internal Ctx =
     val endloc: Loc
     new(ctx, endloc) = { ctx = ctx; endloc = endloc }
 
-    member self.Err(e) = self.ctx.errs.Add(e)
+    member self.Err e = self.ctx.errs.Add(e)
+    member self.Tks = self.ctx.raw.AsSliced()
+    member self.Restore r = self.Tks.ByCodeRange r
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -81,48 +83,45 @@ let internal pBreak (ctx: Ctx) (tks: Tks) (thenf: pExprRet -> pExprRet) =
 
 type internal pExprRet = (PExpr * CodeRange) Maybe
 
-let internal pExprFinish (tks: Tks) (thenf: SlicedFunc<Tokens, pExprRet, pExprRet>) e cr =
+let internal pExprFinish (thenf: pExprRet -> pExprRet) e cr =
     let r =
         match e with
         | Nil -> Nil
         | Just e -> Just (e, cr)
-    thenf.Invoke(tks, r)
+    thenf r
 
-let internal pExpr (ctx: Ctx) (tks: Tks) (thenf: SlicedFunc<Tokens, pExprRet, pExprRet>) = 
+let internal pExpr (ctx: Ctx) (tks: Tks) (thenf: pExprRet -> pExprRet) = 
     match pBool tks with
-    | Just (e, cr) -> pExprFinish tks thenf e cr
+    | Just (e, cr) -> pExprFinish thenf e cr
     | Nil -> 
     match pNum ctx tks with
-    | Just (e, cr) -> pExprFinish tks thenf e cr
+    | Just (e, cr) -> pExprFinish thenf e cr
     | Nil -> 
     match pId tks with
-    | Just (e, cr) -> pExprFinish tks thenf e cr
+    | Just (e, cr) -> pExprFinish thenf e cr
     | Nil ->
-    pExprFinish tks thenf Nil tks.ToCodeRange
+    pExprFinish thenf Nil tks.ToCodeRange
 
 type internal PCExprOper = PCExpr of PExpr | PCOper of TOper
 
 type internal TCollectExprOpersThen = LinkedList<PCExprOper> -> LinkedList<struct (LinkedListNode<PCExprOper> * PExpr ref)> -> CodeRange -> pExprRet
 
-[<NoEquality; NoComparison>]
-type internal pCollectExprOpersPart2 =
-    { ctx: Ctx; list: PCExprOper LinkedList; exprs: struct (PCExprOper LinkedListNode * PExpr ref) LinkedList; thenf: TCollectExprOpersThen }
-    interface SlicedFunc<Tokens, pExprRet, pExprRet> with
-        member s.Invoke(tks, r) =
-            match r with
-            | Just (e, cr) -> 
-                let n = s.list.PushLast(PCExpr e)
-                s.exprs.PushLast(struct (n, ref e)) |> ignore
-                pCollectExprOpers s.ctx (tks.ByCodeRange cr) s.list s.exprs s.thenf
-            | Nil ->
-            match tks.First with
-            | Just (Tokens.Oper o) ->
-                s.list.PushLast(PCOper o) |> ignore
-                pCollectExprOpers s.ctx tks.Tail s.list s.exprs s.thenf
-            | _ -> s.thenf s.list s.exprs tks.ToCodeRange
-
 let internal pCollectExprOpers (ctx: Ctx) (tks: Tks) (list: PCExprOper LinkedList) (exprs: struct (PCExprOper LinkedListNode * PExpr ref) LinkedList) (thenf: TCollectExprOpersThen) =
-    pExpr ctx tks { ctx = ctx; list = list; exprs = exprs; thenf = thenf }
+    let tksr = tks.ToCodeRange
+    let part2 r =
+        let tks = ctx.Restore tksr
+        match r with
+        | Just (e, cr) -> 
+            let n = list.PushLast(PCExpr e)
+            exprs.PushLast(struct (n, ref e)) |> ignore
+            pCollectExprOpers ctx (tks.ByCodeRange cr) list exprs thenf
+        | Nil ->
+        match tks.First with
+        | Just (Tokens.Oper o) ->
+            list.PushLast(PCOper o) |> ignore
+            pCollectExprOpers ctx tks.Tail list exprs thenf
+        | _ -> thenf list exprs tksr
+    pExpr ctx tks part2
 
 let internal pExprOpersEdgeDoLeft (list: PCExprOper LinkedList) (node: PCExprOper LinkedListNode) (e: PExpr ref) (o: TOper) =
     let ne = OperLeft <| { Oper = o; Right = !e }
