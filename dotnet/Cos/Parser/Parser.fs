@@ -6,18 +6,17 @@ open System.Runtime.InteropServices
 open Volight.Cos.SrcPos
 open Volight.Cos.Utils
 open Volight.Cos.Utils.Utils
-open Volight.Cos.Utils.SlicedEx
+open Volight.Cos.Utils.FlakeEx
 open Volight.Cos.Utils.LinkedListExt
 open Volight.Cos.Parser.KeyWords
 
 
-type internal Tks = Tokens Sliced
+type internal Tks = Tokens Flake
 
 type internal CtxRef =
-    val raw: Tokens []
     val errs: ParserError List
     val endloc: Loc
-    new(raw, endloc) = { raw = raw; errs = List(); endloc =endloc }
+    new(endloc) = { errs = List(); endloc = endloc }
     member self.ToCtx = Ctx(self, self.endloc)
 
 and internal Ctx =
@@ -26,8 +25,6 @@ and internal Ctx =
     new(ctx, endloc) = { ctx = ctx; endloc = endloc }
 
     member self.Err e = self.ctx.errs.Add(e)
-    member self.Tks = self.ctx.raw.AsSliced()
-    member self.Restore r = self.Tks.ByCodeRange r
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -37,15 +34,15 @@ let internal endLocOf (tks: Tks) = match tks.Last with Just t -> t.Loc | Nil -> 
 
 let internal pBool (tks: Tks) =
     match tks.First with
-    | Just (Tokens.ID (v & { Id = Key KeyWord.True })) -> Just struct (True v |> Bool |> Just, tks.CodeRangeTail)
-    | Just (Tokens.ID (v & { Id = Key KeyWord.False })) -> Just struct (False v |> Bool |> Just, tks.CodeRangeTail)
+    | Just (Tokens.ID (v & { Id = Key KeyWord.True })) -> Just struct (True v |> Bool |> Just, tks.Tail)
+    | Just (Tokens.ID (v & { Id = Key KeyWord.False })) -> Just struct (False v |> Bool |> Just, tks.Tail)
     | _ -> Nil
 
 let internal pNum (ctx: Ctx) (tks: Tks) =
     match tks.First with
     | Just (Tokens.Num n) -> 
         match n.Suffix with
-        | Just _ -> Just struct (PNum.New(n) |> Num |> Just, tks.CodeRangeTail)
+        | Just _ -> Just struct (PNum.New(n) |> Num |> Just, tks.Tail)
         | Nil ->
             match tks.[1] with
             | Just (Tokens.Oper (o & { Str = "." })) ->
@@ -54,15 +51,15 @@ let internal pNum (ctx: Ctx) (tks: Tks) =
                     match n.Prefix with
                     | Just _ -> 
                         ctx.Err(IllegalFloatingNumber(n, o, d))
-                        Just struct (PNum.New(n) |> Num |> Just, tks.CodeRangeTail)
-                    | Nil -> Just struct (PNum.New(n, o, d) |> Num |> Just, tks.CodeRangeFrom 3)
-                | _ -> Just struct (PNum.New(n) |> Num |> Just, tks.CodeRangeTail)
-            | _ -> Just struct (PNum.New(n) |> Num |> Just, tks.CodeRangeTail)
+                        Just struct (PNum.New(n) |> Num |> Just, tks.Tail)
+                    | Nil -> Just struct (PNum.New(n, o, d) |> Num |> Just, tks.Slice 3)
+                | _ -> Just struct (PNum.New(n) |> Num |> Just, tks.Tail)
+            | _ -> Just struct (PNum.New(n) |> Num |> Just, tks.Tail)
     | _ -> Nil
 
 let internal pId (tks: Tks) =
     match tks.First with
-    | Just (Tokens.ID v) when v.IsIdAllowed -> Just struct (PExpr.Id v |> Just, tks.CodeRangeTail)
+    | Just (Tokens.ID v) when v.IsIdAllowed -> Just struct (PExpr.Id v |> Just, tks.Tail)
     | _ -> Nil
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -70,10 +67,9 @@ let internal pId (tks: Tks) =
 let internal pBreak (ctx: Ctx) (tks: Tks) (thenf: pExprRes -> pExprRet) =
     match tks.First with
     | Just (Tokens.ID (v & { Id = Key KeyWord.Break })) -> 
-        let tailRange = tks.CodeRangeTail
         pExprOpersThen ctx tks.Tail <| function
         | Just struct (e, r) -> thenf <| Just struct (Break <| { TBreak = v; Label = Nil; Expr = Just e } |> Just, r)
-        | Nil -> thenf <| Just struct (Break <| { TBreak = v; Label = Nil; Expr = Nil } |> Just, tailRange)
+        | Nil -> thenf <| Just struct (Break <| { TBreak = v; Label = Nil; Expr = Nil } |> Just, tks.Tail)
     | _ -> thenf Nil
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -81,17 +77,16 @@ let internal pBreak (ctx: Ctx) (tks: Tks) (thenf: pExprRes -> pExprRet) =
 let internal pReturn (ctx: Ctx) (tks: Tks) (thenf: pExprRes -> pExprRet) =
     match tks.First with
     | Just (Tokens.ID (v & { Id = Key KeyWord.Return })) -> 
-        let tailRange = tks.CodeRangeTail
         pExprOpersThen ctx tks.Tail <| function
         | Just struct (e, r) -> thenf <| Just struct (Return <| { TReturn = v; Label = Nil; Expr = Just e } |> Just, r)
-        | Nil -> thenf <| Just struct (Return <| { TReturn = v; Label = Nil; Expr = Nil } |> Just, tailRange)
+        | Nil -> thenf <| Just struct (Return <| { TReturn = v; Label = Nil; Expr = Nil } |> Just, tks.Tail)
     | _ -> thenf Nil
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-type internal pExprRet = (struct (PExpr * CodeRange)) Maybe
+type internal pExprRet = (struct (PExpr * Tks)) Maybe
 
-type internal pExprRes = (struct (PExpr Maybe * CodeRange)) Maybe
+type internal pExprRes = (struct (PExpr Maybe * Tks)) Maybe
 
 let internal pExprFinish (thenf: pExprRet -> pExprRet) e cr =
     match e with
@@ -108,36 +103,32 @@ let internal pExpr (ctx: Ctx) (tks: Tks) (thenf: pExprRet -> pExprRet) =
     match pId tks with
     | Just (e, cr) -> pExprFinish thenf e cr
     | Nil ->
-    let tksr = tks.ToCodeRange 
-    pBreak ctx tks.Self <| function
+    pBreak ctx tks <| function
     | Just (e, cr) -> pExprFinish thenf e cr
     | Nil -> 
-    pReturn ctx (ctx.Restore tksr) <| function
+    pReturn ctx tks <| function
     | Just (e, cr) -> pExprFinish thenf e cr
     | Nil -> 
-    pExprFinish thenf Nil tksr
+    pExprFinish thenf Nil tks 
+
 
 
 type internal PCExprOper = PCExpr of PExpr | PCOper of TOper
 
-type internal TCollectExprOpersThen = LinkedList<PCExprOper> -> LinkedList<struct (LinkedListNode<PCExprOper> * PExpr ref)> -> CodeRange -> pExprRet
+type internal TCollectExprOpersThen = LinkedList<PCExprOper> -> LinkedList<struct (LinkedListNode<PCExprOper> * PExpr ref)> -> Tks -> pExprRet
 
 let internal pCollectExprOpers (ctx: Ctx) (tks: Tks) (list: PCExprOper LinkedList) (exprs: struct (PCExprOper LinkedListNode * PExpr ref) LinkedList) (thenf: TCollectExprOpersThen) =
-    let tksr = tks.ToCodeRange
-    let part2 r =
-        let tks = ctx.Restore tksr
-        match r with
-        | Just struct (e, cr) -> 
-            let n = list.PushLast(PCExpr e)
-            exprs.PushLast(struct (n, ref e)) |> ignore
-            pCollectExprOpers ctx (tks.ByCodeRange cr) list exprs thenf
-        | Nil ->
-        match tks.First with
-        | Just (Tokens.Oper o) ->
-            list.PushLast(PCOper o) |> ignore
-            pCollectExprOpers ctx tks.Tail list exprs thenf
-        | _ -> thenf list exprs tksr
-    pExpr ctx tks part2
+    pExpr ctx tks <| function
+    | Just struct (e, cr) -> 
+        let n = list.PushLast(PCExpr e)
+        exprs.PushLast(struct (n, ref e)) |> ignore
+        pCollectExprOpers ctx cr list exprs thenf
+    | Nil ->
+    match tks.First with
+    | Just (Tokens.Oper o) ->
+        list.PushLast(PCOper o) |> ignore
+        pCollectExprOpers ctx tks.Tail list exprs thenf
+    | _ -> thenf list exprs tks
 
 let internal pExprOpersEdgeDoLeft (list: PCExprOper LinkedList) (node: PCExprOper LinkedListNode) (e: PExpr ref) (o: TOper) =
     let ne = OperLeft <| { Oper = o; Right = !e }
@@ -253,16 +244,17 @@ and internal pExprOpersMidReduce (list: PCExprOper2 LinkedList) (node: PCExprOpe
     pExprOpersMid list node.Next
 
 let internal pExprOpersThen (ctx: Ctx) (tks: Tks) (thenf: pExprRet -> pExprRet) = 
-    let part2 (eos: LinkedList<PCExprOper>) exprs cr =
-        if eos.Count = 0 then Nil else
-            pExprOpersEdge eos exprs exprs.First
-            let eos = pExprOpersClean ctx eos (LinkedList())
-            let r = pExprOpersMid eos eos.First
-            thenf <| Just (r, cr)
-    pCollectExprOpers ctx tks (LinkedList()) (LinkedList()) part2
+    pCollectExprOpers ctx tks (LinkedList()) (LinkedList()) <| fun eos exprs cr ->
+    if eos.Count = 0 then Nil else
+        pExprOpersEdge eos exprs exprs.First
+        let eos = pExprOpersClean ctx eos (LinkedList())
+        let r = pExprOpersMid eos eos.First
+        thenf <| Just (r, cr)
 
 let internal pExprOpers (ctx: Ctx) (tks: Tks) = 
     pExprOpersThen ctx tks Operators.id
+
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -273,8 +265,8 @@ let internal root (ctx: Ctx) (tks: Tks) =
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 let parser (tks: Tokens []) =
-    let span = tks.AsSliced()
-    let ctx = CtxRef(tks, endLocOf span)
+    let span = tks.AsFlake()
+    let ctx = CtxRef(endLocOf span)
     let r = 
         try root ctx.ToCtx span with 
         | ParserException(k) -> 

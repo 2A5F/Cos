@@ -47,15 +47,15 @@ type 'T Flake =
             | None -> self.Slice(s)
             | Some e -> self.Slice(s, e)
 
-    member self.First = if self.IsEmpty then Nil else Just self.[0]
-    member self.Last = if self.IsEmpty then Nil else Just self.[self.len - 1]
+    member self.First = if self.IsEmpty then Nil else Just self.arr.[self.off]
+    member self.Last = if self.IsEmpty then Nil else Just self.arr.[self.off + self.len - 1]
     member self.Tail = self.Slice(1)
     member inline self.Self = self
 
-    member self.OFirst = if self.IsEmpty then None else Some self.[0]
-    member self.OLast = if self.IsEmpty then None else Some self.[self.len - 1]
-    member self.VFirst = if self.IsEmpty then ValueNone else ValueSome self.[0]
-    member self.VLast = if self.IsEmpty then ValueNone else ValueSome self.[self.len - 1]
+    member self.OFirst = if self.IsEmpty then None else Some self.arr.[self.off]
+    member self.OLast = if self.IsEmpty then None else Some self.arr.[self.off + self.len - 1]
+    member self.VFirst = if self.IsEmpty then ValueNone else ValueSome self.arr.[self.off]
+    member self.VLast = if self.IsEmpty then ValueNone else ValueSome self.arr.[self.off + self.len - 1]
 
     member self.RawIndex i = self.off + i
     member self.FromRawIndex i = i - self.off
