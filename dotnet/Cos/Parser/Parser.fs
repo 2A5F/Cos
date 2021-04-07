@@ -67,28 +67,36 @@ let internal pId (tks: Tks) =
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-let internal pBreak (ctx: Ctx) (tks: Tks) (thenf: pExprRet -> pExprRet) =
+let internal pBreak (ctx: Ctx) (tks: Tks) (thenf: pExprRes -> pExprRet) =
     match tks.First with
     | Just (Tokens.ID (v & { Id = Key KeyWord.Break })) -> 
         let tailRange = tks.CodeRangeTail
-        let pBreakThen r =
-            (match r with 
-            | Just (e, r) -> Just (Break <| { TBreak = v; Label = Nil; Expr = Just e }, r)
-            | Nil -> Just (Break <| { TBreak = v; Label = Nil; Expr = Nil }, tailRange))
-            |> thenf
-        pExprOpersThen ctx tks.Tail pBreakThen
-    | _ -> Nil
+        pExprOpersThen ctx tks.Tail <| function
+        | Just struct (e, r) -> thenf <| Just struct (Break <| { TBreak = v; Label = Nil; Expr = Just e } |> Just, r)
+        | Nil -> thenf <| Just struct (Break <| { TBreak = v; Label = Nil; Expr = Nil } |> Just, tailRange)
+    | _ -> thenf Nil
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-type internal pExprRet = (PExpr * CodeRange) Maybe
+let internal pReturn (ctx: Ctx) (tks: Tks) (thenf: pExprRes -> pExprRet) =
+    match tks.First with
+    | Just (Tokens.ID (v & { Id = Key KeyWord.Return })) -> 
+        let tailRange = tks.CodeRangeTail
+        pExprOpersThen ctx tks.Tail <| function
+        | Just struct (e, r) -> thenf <| Just struct (Return <| { TReturn = v; Label = Nil; Expr = Just e } |> Just, r)
+        | Nil -> thenf <| Just struct (Return <| { TReturn = v; Label = Nil; Expr = Nil } |> Just, tailRange)
+    | _ -> thenf Nil
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+type internal pExprRet = (struct (PExpr * CodeRange)) Maybe
+
+type internal pExprRes = (struct (PExpr Maybe * CodeRange)) Maybe
 
 let internal pExprFinish (thenf: pExprRet -> pExprRet) e cr =
-    let r =
-        match e with
-        | Nil -> Nil
-        | Just e -> Just (e, cr)
-    thenf r
+    match e with
+    | Nil -> thenf Nil
+    | Just e -> thenf <| Just struct (e, cr)
 
 let internal pExpr (ctx: Ctx) (tks: Tks) (thenf: pExprRet -> pExprRet) = 
     match pBool tks with
@@ -100,7 +108,15 @@ let internal pExpr (ctx: Ctx) (tks: Tks) (thenf: pExprRet -> pExprRet) =
     match pId tks with
     | Just (e, cr) -> pExprFinish thenf e cr
     | Nil ->
-    pExprFinish thenf Nil tks.ToCodeRange
+    let tksr = tks.ToCodeRange 
+    pBreak ctx tks.Self <| function
+    | Just (e, cr) -> pExprFinish thenf e cr
+    | Nil -> 
+    pReturn ctx (ctx.Restore tksr) <| function
+    | Just (e, cr) -> pExprFinish thenf e cr
+    | Nil -> 
+    pExprFinish thenf Nil tksr
+
 
 type internal PCExprOper = PCExpr of PExpr | PCOper of TOper
 
@@ -111,7 +127,7 @@ let internal pCollectExprOpers (ctx: Ctx) (tks: Tks) (list: PCExprOper LinkedLis
     let part2 r =
         let tks = ctx.Restore tksr
         match r with
-        | Just (e, cr) -> 
+        | Just struct (e, cr) -> 
             let n = list.PushLast(PCExpr e)
             exprs.PushLast(struct (n, ref e)) |> ignore
             pCollectExprOpers ctx (tks.ByCodeRange cr) list exprs thenf

@@ -37,6 +37,7 @@ type Sliced<'T> =
     member self.First = if self.IsEmpty then Nil else Just self.span.[0]
     member self.Last = if self.IsEmpty then Nil else Just self.span.[self.span.Length - 1]
     member self.Tail = self.Slice(1)
+    member inline self.Self = self
 
     member self.OFirst = if self.IsEmpty then None else Some self.span.[0]
     member self.OLast = if self.IsEmpty then None else Some self.span.[self.span.Length - 1]

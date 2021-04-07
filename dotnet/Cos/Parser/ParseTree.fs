@@ -1154,6 +1154,8 @@ type PExpr =
     override self.ToString() =
         match self with
         | Id i -> string i
+        | Me i -> string i
+        | TMe i -> string i
         | If i -> string i
         | Case i -> string i
         | While i -> string i

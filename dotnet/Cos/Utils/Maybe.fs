@@ -3,7 +3,7 @@ namespace Volight.Cos.Utils
 open System.Runtime.CompilerServices
 
 [<Struct; IsReadOnly>]
-type Maybe<'T> =
+type 'T Maybe =
     | Nil
     | Just of 'T
 
