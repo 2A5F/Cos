@@ -9,6 +9,7 @@
     <Compile Include="Utils\Utils.fs" />
     <Compile Include="Utils\LinkedList.fs" />
     <Compile Include="Utils\Sliced.fs" />
+    <Compile Include="Utils\Flake.fs" />
     <Compile Include="Utils\SubStr.fs" />
     <Compile Include="Scanner\Reader.fs" />
     <Compile Include="Scanner\KeyWord.fs" />

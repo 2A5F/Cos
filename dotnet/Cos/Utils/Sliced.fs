@@ -5,7 +5,7 @@ open System.Runtime.CompilerServices
 open Volight.Cos.SrcPos
 
 [<Struct; IsReadOnly; IsByRefLike;>]
-type Sliced<'T> =
+type 'T Sliced =
     val span: ReadOnlySpan<'T>
     val offset: int
     new (span) = { span = span; offset = 0 }
