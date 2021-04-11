@@ -35,6 +35,7 @@ let tryToStrMap a (p: string) (s: string) (c: string) =
     if sb.Length = 0 then "" else
     $"{p}{string sb}{s}"
 
+/// 尝试从链表节点中取出值
 let inline llnTryValue (n: 'a LinkedListNode) = if isNull n then Nil else Just n.Value
 
 let inline (|NotNull|_|) v = if isNull v then None else Some v
