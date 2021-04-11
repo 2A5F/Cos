@@ -63,8 +63,16 @@ type 'T Flake =
     member self.ToSpan() = Span(self.arr, self.off, self.len)
     member self.ToReadOnlySpan() = ReadOnlySpan(self.arr, self.off, self.len)
     member self.ToSliced() = Sliced(self.ToReadOnlySpan(), self.off)
-    member self.ToArray() = self.arr
-    override self.ToString() = self.ToReadOnlySpan().ToString()
+    member self.ToArray() = self.ToReadOnlySpan().ToArray()
+    member self.ToArraySegment() = ArraySegment(self.arr, self.off, self.len)
+    override self.ToString() = 
+        if typeof<'T> = typeof<char> then
+            self.ToReadOnlySpan().ToString()
+        else if self.IsEmpty then
+            "[]"
+        else
+            let str = String.Join(", ", self.ToArraySegment())
+            $"[{str}]"
 
     member self.GetEnumerator() = self.ToReadOnlySpan().GetEnumerator()
 
@@ -73,6 +81,7 @@ type 'T Flake =
     member self.span = self.ToSpan()
     member self.roSpan = self.ToReadOnlySpan()
     member self.ToSlice = self.ToSliced()
+    member self.ToArrSeg = self.ToArraySegment()
 
     member self.ToCodeRange : CodeRange = { From = self.off; To = self.RawIndex self.Len } 
     member self.CodeRangeTo i : CodeRange = { From = self.off; To = self.RawIndex i } 

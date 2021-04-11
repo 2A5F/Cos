@@ -43,3 +43,5 @@ let inline appF (list: ('a -> 'a) list) a =
     let mutable v = a
     for i in list do v <- i v
     v
+
+let inline id<'T> (v: 'T) = Operators.id v

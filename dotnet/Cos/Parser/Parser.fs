@@ -64,23 +64,39 @@ let internal pId (tks: Tks) =
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+let internal pLabelUse (tks: Tks) =
+    match tks.First with
+    | Just (Tokens.At at) -> 
+        match tks.[1] with
+        | Just (Tokens.ID v) when v.IsIdAllowed -> 
+            { At = at; Name = v } |> Just, tks.Slice(2)
+        | _ -> Nil, tks
+    | _ -> Nil, tks
+
 let internal pBreak (ctx: Ctx) (tks: Tks) (thenf: pExprRes -> pExprRet) =
     match tks.First with
     | Just (Tokens.ID (v & { Id = Key KeyWord.Break })) -> 
-        pExprOpersThen ctx tks.Tail <| function
-        | Just struct (e, r) -> thenf <| Just struct (Break <| { TBreak = v; Label = Nil; Expr = Just e } |> Just, r)
-        | Nil -> thenf <| Just struct (Break <| { TBreak = v; Label = Nil; Expr = Nil } |> Just, tks.Tail)
+        let labelUse, tks = pLabelUse tks.Tail
+        pExprOpersThen ctx tks <| function
+        | Just struct (e, r) -> thenf <| Just struct (Break <| { TBreak = v; Label = labelUse; Expr = Just e } |> Just, r)
+        | Nil -> thenf <| Just struct (Break <| { TBreak = v; Label = labelUse; Expr = Nil } |> Just, tks)
     | _ -> thenf Nil
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
 
 let internal pReturn (ctx: Ctx) (tks: Tks) (thenf: pExprRes -> pExprRet) =
     match tks.First with
     | Just (Tokens.ID (v & { Id = Key KeyWord.Return })) -> 
-        pExprOpersThen ctx tks.Tail <| function
-        | Just struct (e, r) -> thenf <| Just struct (Return <| { TReturn = v; Label = Nil; Expr = Just e } |> Just, r)
-        | Nil -> thenf <| Just struct (Return <| { TReturn = v; Label = Nil; Expr = Nil } |> Just, tks.Tail)
+        let labelUse, tks = pLabelUse tks.Tail
+        pExprOpersThen ctx tks <| function
+        | Just struct (e, r) -> thenf <| Just struct (Return <| { TReturn = v; Label = labelUse; Expr = Just e } |> Just, r)
+        | Nil -> thenf <| Just struct (Return <| { TReturn = v; Label = labelUse; Expr = Nil } |> Just, tks)
     | _ -> thenf Nil
+
+let internal pContinue (tks: Tks) =
+    match tks.First with
+    | Just (Tokens.ID (v & { Id = Key KeyWord.Continue })) ->
+        let labelUse, tks = pLabelUse tks.Tail
+        Just struct (Continue <| { TContinue = v; Label = labelUse } |> Just, tks)
+    | _ -> Nil
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -100,7 +116,7 @@ let internal pExpr (ctx: Ctx) (tks: Tks) (thenf: pExprRet -> pExprRet) =
     match pNum ctx tks with
     | Just (e, cr) -> pExprFinish thenf e cr
     | Nil -> 
-    match pId tks with
+    match pContinue tks with
     | Just (e, cr) -> pExprFinish thenf e cr
     | Nil ->
     pBreak ctx tks <| function
@@ -109,6 +125,9 @@ let internal pExpr (ctx: Ctx) (tks: Tks) (thenf: pExprRet -> pExprRet) =
     pReturn ctx tks <| function
     | Just (e, cr) -> pExprFinish thenf e cr
     | Nil -> 
+    match pId tks with
+    | Just (e, cr) -> pExprFinish thenf e cr
+    | Nil ->
     pExprFinish thenf Nil tks 
 
 
