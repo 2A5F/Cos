@@ -225,6 +225,14 @@ type PReturn =
     override self.ToString() =
         $"return{self.Label.TryToStr}{self.Expr.TryToStrSL}"
 
+type PReturnArrow =
+    { Arrow: TDArrow
+      Label: PLabelUse Maybe
+      Expr: PExpr }
+
+    override self.ToString() =
+        $"=>{self.Label.TryToStr} {self.Expr}"
+
 type PGoto =
     { TGoto: TId
       Label: PLabelUse Maybe }
@@ -1128,6 +1136,7 @@ type PExpr =
     | Break of PBreak
     | Continue of PContinue
     | Return of PReturn
+    | ReturnArrow of PReturnArrow
     | Goto of PGoto
     | Throw of PThrow
     | Try of PTry
@@ -1164,6 +1173,7 @@ type PExpr =
         | Break i -> string i
         | Continue i -> string i
         | Return i -> string i
+        | ReturnArrow i -> string i
         | Goto i -> string i
         | Throw i -> string i
         | Try i -> string i

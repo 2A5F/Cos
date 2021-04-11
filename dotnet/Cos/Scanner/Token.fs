@@ -15,6 +15,8 @@ type Tokens =
     | Comma of TComma
     | Oper of TOper
     | At of TAt
+    | DArrow of TDArrow
+    | SArrow of TSArrow
     | Num of TNum
     | Char of TChar
     | Str of TStr
@@ -27,6 +29,8 @@ type Tokens =
         | Comma v -> v.Loc
         | Oper v -> v.Loc
         | At v -> v.Loc
+        | DArrow v -> v.Loc
+        | SArrow v -> v.Loc
         | Num v -> v.Loc
         | Char v -> v.Loc
         | Str v -> v.Loc
@@ -84,6 +88,8 @@ type Tokens =
         | Comma v -> v.ToString()
         | Oper v -> v.ToString()
         | At v -> v.ToString()
+        | DArrow v -> v.ToString()
+        | SArrow v -> v.ToString()
         | Num v -> v.ToString()
         | Char v -> v.ToString()
         | Str v -> v.ToString()
@@ -197,6 +203,20 @@ type TAt =
     { Loc: Loc }
 
     override _.ToString() = "@"
+
+/// <summary> <code>=></code> </summary>
+[<Struct; IsReadOnly>]
+type TDArrow =
+    { Loc: Loc }
+
+    override _.ToString() = "=>"
+
+/// <summary> <code>-></code> </summary>
+[<Struct; IsReadOnly>]
+type TSArrow =
+    { Loc: Loc }
+
+    override _.ToString() = "->"
 
 [<Struct; IsReadOnly; DebuggerDisplay(@"TNum \{ {ToString(),nq} \}")>]
 type TNum =

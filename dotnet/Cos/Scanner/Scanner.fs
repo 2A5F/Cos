@@ -108,6 +108,28 @@ let internal at (ctx: Ctx) (code: Code) =
         Just (code.CodeRangeFrom 1)
     | _ -> Nil
 
+let internal darrow (ctx: Ctx) (code: Code) =
+    match code.First with 
+    | Just '=' -> 
+        match code.[1] with
+        | Just '>' ->
+            let loc = ctx.Loc (code.CodeRangeTo 2)
+            ctx.tokens.Add(DArrow { Loc = loc })
+            Just (code.CodeRangeFrom 2)
+        | _ -> Nil
+    | _ -> Nil
+
+let internal sarrow (ctx: Ctx) (code: Code) =
+    match code.First with 
+    | Just '-' -> 
+        match code.[1] with
+        | Just '>' ->
+            let loc = ctx.Loc (code.CodeRangeTo 2)
+            ctx.tokens.Add(SArrow { Loc = loc })
+            Just (code.CodeRangeFrom 2)
+        | _ -> Nil
+    | _ -> Nil
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 let inline internal isNumFirst c = (c >= '0' && c <= '9')
@@ -372,13 +394,19 @@ let rec inline internal blockItem (ctx: Ctx) (code: Code) =
                     | Nil -> 
                         match block ctx code with
                         | Nil ->
-                            match oper ctx code with
+                            match darrow ctx code with
                             | Nil ->
-                                match at ctx code with
+                                match sarrow ctx code with
                                 | Nil ->
-                                    match num ctx code with
+                                    match at ctx code with
                                     | Nil ->
-                                        match str ctx code with
+                                        match oper ctx code with
+                                        | Nil ->
+                                            match num ctx code with
+                                            | Nil ->
+                                                match str ctx code with
+                                                | r -> r
+                                            | r -> r
                                         | r -> r
                                     | r -> r
                                 | r -> r
