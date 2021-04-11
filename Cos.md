@@ -57,8 +57,8 @@ case a {
 ### 块
 
 ```scala
-:{ }
-var a = :{ }
+@{ }
+var a = @{ }
 ```
 
 ### With
@@ -66,7 +66,7 @@ var a = :{ }
 with 可以在同级作用域下尾随语句或尾随块  
 
 ```scala
-:{ } with { }
+@{ } with { }
 ```
 
 ### 循环
@@ -83,7 +83,7 @@ while do true { } // 等于 c 系的 do while
 #### 使用 with 模拟三元 for
 
 ```scala
-:{ var a = 1 } with
+@{ var a = 1 } with
 while a < len { 
 
 } with { let a + 1 }
@@ -103,7 +103,7 @@ return a;
 带标签情况
 
 ```kotlin
-l@:{
+l@{
   break@l;
 }
 l@while true { 
@@ -112,7 +112,7 @@ l@while true {
 l@fn some() {
   return@l;
 }
-l@:{
+l@{
   goto@l;
 }
 ```
@@ -127,15 +127,15 @@ goto@l;
 #### 裸三元 for 实现
 
 ```kotlin
-block@:{ 
+block@{ 
   var a = 1;
-  cond@:{
+  cond@{
     if a < len else break@block;
   }
-  body@:{
+  body@{
     goto@inc; // continue
     break@block; // break
-    inc@:{
+    inc@{
       let a + 1;
     }
   }
