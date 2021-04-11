@@ -41,16 +41,29 @@ let internal space (ctx: Ctx) (code: Code) =
 let inline internal isIdFirst c = match c with '_' | '$' -> true | _ -> Char.IsLetter c
 let inline internal isIdBody c = match c with '_' | '$' -> true | _ -> Char.IsLetterOrDigit c
 
+let internal idBodyEndEnd (ctx: Ctx) (code: Code) i range (str: SubStr) =
+    let loc = ctx.Loc range
+    let id = TId.New(str, loc)
+    ctx.tokens.Add(Tokens.ID id)
+    Just <| code.CodeRangeFrom i
+
+let internal idBodyEnd (ctx: Ctx) (code: Code) i =
+    let range = code.CodeRangeTo i
+    let str = ctx.SubStr range
+    idBodyEndEnd ctx code i range str
+
 let rec internal idBody (ctx: Ctx) (code: Code) i =
     match code.[i] with
     | Just c when isIdBody c -> idBody ctx code (i + 1)
     | _ ->
     let range = code.CodeRangeTo i
-    let loc = ctx.Loc range
     let str = ctx.SubStr range
-    let id = TId.New(str, loc)
-    ctx.tokens.Add(Tokens.ID id)
-    Just <| code.CodeRangeFrom i
+    if str.Equals "try" then 
+        match code.[i] with
+        | Just ('!' | '?') -> idBodyEnd ctx code (i + 1)
+        | _ -> idBodyEndEnd ctx code i range str
+    else
+        idBodyEndEnd ctx code i range str
 
 let internal id (ctx: Ctx) (code: Code) =
     match code.First with 

@@ -107,6 +107,37 @@ let internal pReturnArrow (ctx: Ctx) (tks: Tks) (thenf: pExprRes -> pExprRet) =
         | Nil -> thenf <| Nil
     | _ -> thenf Nil
 
+let internal pGoto (tks: Tks) =
+    match tks.First with
+    | Just (Tokens.ID (v & { Id = Key KeyWord.Goto })) ->
+        let struct (labelUse, tks) = pLabelUse tks.Tail
+        Just struct (Goto <| { TGoto = v; Label = labelUse } |> Just, tks)
+    | _ -> Nil
+
+let internal pThrow (ctx: Ctx) (tks: Tks) (thenf: pExprRes -> pExprRet) =
+    match tks.First with
+    | Just (Tokens.ID (v & { Id = Key KeyWord.Throw })) -> 
+        pExprOpersThen ctx tks.Tail <| function
+        | Just struct (e, r) -> thenf <| Just struct (Throw <| { TThrow = v; Expr = e } |> Just, r)
+        | Nil -> thenf <| Nil
+    | _ -> thenf Nil
+
+let internal pTry (ctx: Ctx) (tks: Tks) (thenf: pExprRes -> pExprRet) =
+    match tks.First with
+    | Just (Tokens.ID (v & { Id = Key KeyWord.Try })) -> 
+        pExprOpersThen ctx tks.Tail <| function
+        | Just struct (e, r) -> thenf <| Just struct (Try <| { TTry = v; Expr = e; Kind = PTryKind.PTryN } |> Just, r)
+        | Nil -> thenf <| Nil
+    | Just (Tokens.ID (v & { Id = Key KeyWord.TryE })) -> 
+        pExprOpersThen ctx tks.Tail <| function
+        | Just struct (e, r) -> thenf <| Just struct (Try <| { TTry = v; Expr = e; Kind = PTryKind.PTryE } |> Just, r)
+        | Nil -> thenf <| Nil
+    | Just (Tokens.ID (v & { Id = Key KeyWord.TryQ })) -> 
+        pExprOpersThen ctx tks.Tail <| function
+        | Just struct (e, r) -> thenf <| Just struct (Try <| { TTry = v; Expr = e; Kind = PTryKind.PTryQ } |> Just, r)
+        | Nil -> thenf <| Nil
+    | _ -> thenf Nil
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 type internal pExprRet = (struct (PExpr * Tks)) Maybe
@@ -128,6 +159,9 @@ let internal pExpr (ctx: Ctx) (tks: Tks) (thenf: pExprRet -> pExprRet) =
     match pContinue tks with
     | Just (e, cr) -> pExprFinish thenf e cr
     | Nil ->
+    match pGoto tks with
+    | Just (e, cr) -> pExprFinish thenf e cr
+    | Nil ->
     pBreak ctx tks <| function
     | Just (e, cr) -> pExprFinish thenf e cr
     | Nil -> 
@@ -137,6 +171,12 @@ let internal pExpr (ctx: Ctx) (tks: Tks) (thenf: pExprRet -> pExprRet) =
     pReturnArrow ctx tks <| function
     | Just (e, cr) -> pExprFinish thenf e cr
     | Nil -> 
+    pThrow ctx tks <| function
+    | Just (e, cr) -> pExprFinish thenf e cr
+    | Nil ->
+    pTry ctx tks <| function
+    | Just (e, cr) -> pExprFinish thenf e cr
+    | Nil ->
     match pId tks with
     | Just (e, cr) -> pExprFinish thenf e cr
     | Nil ->

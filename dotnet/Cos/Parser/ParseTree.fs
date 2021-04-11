@@ -247,11 +247,23 @@ type PThrow =
 
     override self.ToString() = $"throw {self.Expr}"
 
-type PTry =
-    { TTry: TId
-      Expr: PExpr }
+type PTryKind = 
+/// try
+| PTryN = 0uy
+/// try!
+| PTryE = 1uy
+/// try?
+| PTryQ = 2uy
 
-    override self.ToString() = $"try {self.Expr}"
+type PTry =
+    /// try | try! | try?
+    { TTry: TId
+      Expr: PExpr
+      Kind: PTryKind }
+
+    override self.ToString() = 
+        let kind = match self.Kind with PTryKind.PTryE -> "!" | PTryKind.PTryQ -> "?" | _ -> ""
+        $"try{kind} {self.Expr}"
 
 type PCatch =
     { TCatch: TId

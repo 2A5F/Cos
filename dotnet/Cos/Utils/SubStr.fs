@@ -28,10 +28,30 @@ type SubStr =
             else if this.raw.[i + this.range.From] <> other.raw.[i + other.range.From] then false
             else find (i + 1)
         find 0
-    override self.Equals(other: obj) = match other with :? SubStr as o -> self.Equals o | _ -> false
+    member self.Equals(other: string) =
+        if self.range.Len <> other.Length then false
+        else if self.range.Len = 0 then true
+        else 
+        let this = self
+        let len = self.range.Len
+        let rec find i =
+            if i >= len then true
+            else if this.raw.[i + this.range.From] <> other.[i] then false
+            else find (i + 1)
+        find 0
+    override self.Equals(other: obj) = 
+        match other with 
+        | :? SubStr as o -> self.Equals o 
+        | :? string as s -> self.Equals s
+        | _ -> false
 
     interface IEquatable<SubStr> with
         member self.Equals other = self.Equals other
+    interface IEquatable<string> with
+        member self.Equals other = self.Equals other
+
+    static member op_Equality(self: SubStr, other: SubStr) = self.Equals other
+    static member op_Equality(self: SubStr, other: string) = self.Equals other
 
 module SubStrEx =
     type String with
