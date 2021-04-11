@@ -11,7 +11,7 @@ type KeyWord =
 | Continue = 11uy | Return = 12uy | Try = 13uy | Throw = 14uy | Catch = 15uy | Finally = 16uy | Fn = 17uy | Def = 18uy | Data = 19uy | Kind = 20uy | Enum = 21uy
 | TMe = 22uy | Me = 23uy | Where = 24uy | Module = 25uy | Import = 26uy | Export = 27uy | Is = 28uy | As = 29uy | Const = 30uy | Static = 31uy
 | Co = 32uy | Inline = 33uy | Throws = 34uy | Tail = 35uy | Public = 36uy | Private = 37uy | Internal = 38uy | Protected = 39uy | Goto = 40uy | Need = 41uy
-| In = 42uy | Underscore = 43uy | False = 44uy | True = 45uy
+| In = 42uy | Underscore = 43uy | False = 44uy | True = 45uy | Mut = 46uy
 
 module KeyWords =
     [<AbstractClass; Sealed>]

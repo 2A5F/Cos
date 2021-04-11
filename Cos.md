@@ -10,6 +10,8 @@ var b: int;
 ### 修改
 
 ```ts
+var mut a; // 声明可变
+mut a; // 或者直接 mut
 let a = 2;
 let a + 1;
 ```
@@ -83,7 +85,7 @@ while do true { } // 等于 c 系的 do while
 #### 使用 with 模拟三元 for
 
 ```scala
-@{ var a = 1 } with
+@{ mut a = 1 } with
 while a < len { 
 
 } with { let a + 1 }
@@ -128,7 +130,7 @@ goto@l;
 
 ```kotlin
 block@{ 
-  var a = 1;
+  mut a = 1;
   cond@{
     if a < len else break@block;
   }
@@ -422,7 +424,7 @@ def Foo = Bar;
 
 ```scala
 def Foo data {
-  var a: int;
+  mut a: int;
   
   fn Me(a: int) {
     let me.a = a;
