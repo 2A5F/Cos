@@ -426,7 +426,7 @@ def Foo = Bar;
 def Foo data {
   mut a: int;
   
-  fn Me(a: int) {
+  fn Me(a: int) new { // 带 new 标注的才是构造函数
     let me.a = a;
   }
 
