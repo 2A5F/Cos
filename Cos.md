@@ -426,9 +426,13 @@ def Foo = Bar;
 def Foo data {
   mut a: int;
   
-  // Me 既是一个类型指向自己，也可以用来定义在静态域上而不是实例上的函数
-  fn Me(a: int) new { // 带 new 标注的才是构造函数
+  // Me 既是一个类型指向自己，也可以用于定义构造函数
+  fn Me(a: int) { 
     let me.a = a;
+  }
+
+  fn Me.foo() { // 具名构造函数
+    let me.a = 1;
   }
 
   fn add(b: int) -> int {
