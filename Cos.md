@@ -416,7 +416,7 @@ def ?[T] = T | (); // 伪代码
 
 ### 可选类型
 
-```js
+```ts
 var o: T? = none;
 var o: int? = some(1);
 var o: int? = 1; // 隐式转换
@@ -425,6 +425,18 @@ var o: int?? = some(1); // 不存在多层隐式转换
 def optional[T] enum {
   none, some(T)
 }
+```
+
+## 常量
+
+常量是可以再编译时（即使cos是脚本也是有编译时的）确定的表达式  
+常量可以作为泛型参数传入  
+`const` 标注的函数可以再常量表达式中被调用  
+
+```ts
+const a: int = 1 + 1;
+fn foo(a: int, b: int) -> int const do a * b;
+const b: int = foo(3, 5);
 ```
 
 ## 定义
@@ -467,6 +479,21 @@ a.add(2); // 3
 a.val; // 1, 没有参数的函数可以省略括号
 ```
 
+#### 静态和定义合并
+ 
+类型的静态域实际上相当于隐私定义了一个同名的模块  
+也可以手动声明同名模块  
+同个模块内的同名的定义会按顺序合并  
+ 
+ ```scala
+ def Foo data {
+   static var a: int = 1;
+ }
+ module Foo {
+   fn get_a() -> int do a;
+ }
+ ```
+
 ### 接口定义
 
 使用结构类型，无需显式标志实现接口
@@ -482,6 +509,11 @@ def Bar data(a: int) : Foo {
   fn add(b: int) -> int { a + b }
 }
 ```
+
+定义结构时会隐式定义同名的接口  
+也可以手动定义同名接口  
+手动定义同名接口后将不会隐式定义默认的同名接口  
+手动定义后要求结构实现同名接口  
 
 #### 关联类型
 
@@ -530,6 +562,10 @@ def Functor[T] kind : for[T] {
 def Option[T] enum {
   Some(T),
   None,
+}
+
+// 外置约束
+def Foo[T] where T : bool {
 }
 ```
 
