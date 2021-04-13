@@ -251,6 +251,13 @@ var a = foo { };
 var a = foo.{ };
 ```
 
+### 函数标注
+
+```rust
+fn foo() inline {} // 内联语义
+fn bar() co {} // 延续语义
+```
+
 ## 基础类型
 
 ### 逻辑
