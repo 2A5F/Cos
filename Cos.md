@@ -253,9 +253,12 @@ var a = foo.{ };
 
 ### 函数标注
 
+函数标注在大括号或者 do 前面，没有顺序要求
+
 ```rust
 fn foo() inline {} // 内联语义
 fn bar() co {} // 延续语义
+fn baz() inline co {}
 ```
 
 ## 基础类型
