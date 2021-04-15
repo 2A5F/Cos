@@ -7,6 +7,7 @@ exception ParserException of ParserError
 
 type ParserError =
 | MultipleErrors of ParserError List
+| UnexpectedToken of Tokens
 | InternalError of string
 | UnexpectedBlockEnd of Loc
 | UnknownOperator of TOper

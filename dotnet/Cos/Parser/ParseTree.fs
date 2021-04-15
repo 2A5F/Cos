@@ -3,6 +3,7 @@ namespace rec Volight.Cos.Parser
 open Volight.Cos.Utils
 open Volight.Cos.Utils.Utils
 open Volight.Cos.SrcPos
+open System.Collections.Generic
 
 type PAccess =
     | Public of TId
@@ -286,7 +287,7 @@ type PFinally =
 
 type PBlock =
     { Brackets: struct (Loc * Loc)
-      Items: PItem [] }
+      Items: PItem LinkedList }
 
     override self.ToString() =
         let b = tryToStrMap self.Items " " " " " "
@@ -306,7 +307,7 @@ type PLabelUse =
 
 type PCodeBlock =
     { Label: PLabelDef Maybe
-      Colon: TOper
+      At: TAt
       Block: PBlock
       With: PWith Maybe }
 
@@ -1218,7 +1219,7 @@ type PItem =
     | While of PWhile
     | For of PFor
     | Block of PCodeBlock
-    | Expr of PExprItem
+    | Expr of PExpr
     | Ret of PExpr
     | Label of PItemLabel
     | Catch of PCatch
@@ -1249,12 +1250,6 @@ type PItem =
         | ModuleHead i -> string i
         | Import i -> string i
         | Export i -> string i
-
-type PExprItem =
-    { Expr: PExpr
-      Split: TSplit }
-
-    override self.ToString() = $"{self.Expr};"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 

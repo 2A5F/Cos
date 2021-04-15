@@ -25,6 +25,7 @@ and internal Ctx =
     new(ctx, endloc) = { ctx = ctx; endloc = endloc }
 
     member self.Err e = self.ctx.errs.Add(e)
+    member self.Sub(endloc: Loc) = Ctx(self.ctx, endloc)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -73,7 +74,7 @@ let internal pLabelUse (tks: Tks) =
         | _ -> Nil, tks
     | _ -> Nil, tks
 
-let internal pBreak (ctx: Ctx) (tks: Tks) (thenf: pExprRes -> pExprRet) =
+let internal pBreak (ctx: Ctx) (tks: Tks) (thenf: pExprRes -> 'a) =
     match tks.First with
     | Just (Tokens.ID (v & { Id = Key KeyWord.Break })) -> 
         let struct (labelUse, tks) = pLabelUse tks.Tail
@@ -82,7 +83,7 @@ let internal pBreak (ctx: Ctx) (tks: Tks) (thenf: pExprRes -> pExprRet) =
         | Nil -> thenf <| Just struct (Break <| { TBreak = v; Label = labelUse; Expr = Nil } |> Just, tks)
     | _ -> thenf Nil
 
-let internal pReturn (ctx: Ctx) (tks: Tks) (thenf: pExprRes -> pExprRet) =
+let internal pReturn (ctx: Ctx) (tks: Tks) (thenf: pExprRes -> 'a) =
     match tks.First with
     | Just (Tokens.ID (v & { Id = Key KeyWord.Return })) -> 
         let struct (labelUse, tks) = pLabelUse tks.Tail
@@ -98,7 +99,7 @@ let internal pContinue (tks: Tks) =
         Just struct (Continue <| { TContinue = v; Label = labelUse } |> Just, tks)
     | _ -> Nil
 
-let internal pReturnArrow (ctx: Ctx) (tks: Tks) (thenf: pExprRes -> pExprRet) =
+let internal pReturnArrow (ctx: Ctx) (tks: Tks) (thenf: pExprRes -> 'a) =
     match tks.First with
     | Just (Tokens.DArrow a) -> 
         let struct (labelUse, tks) = pLabelUse tks.Tail
@@ -114,7 +115,7 @@ let internal pGoto (tks: Tks) =
         Just struct (Goto <| { TGoto = v; Label = labelUse } |> Just, tks)
     | _ -> Nil
 
-let internal pThrow (ctx: Ctx) (tks: Tks) (thenf: pExprRes -> pExprRet) =
+let internal pThrow (ctx: Ctx) (tks: Tks) (thenf: pExprRes -> 'a) =
     match tks.First with
     | Just (Tokens.ID (v & { Id = Key KeyWord.Throw })) -> 
         pExprOpersThen ctx tks.Tail <| function
@@ -122,7 +123,7 @@ let internal pThrow (ctx: Ctx) (tks: Tks) (thenf: pExprRes -> pExprRet) =
         | Nil -> thenf <| Nil
     | _ -> thenf Nil
 
-let internal pTry (ctx: Ctx) (tks: Tks) (thenf: pExprRes -> pExprRet) =
+let internal pTry (ctx: Ctx) (tks: Tks) (thenf: pExprRes -> 'a) =
     match tks.First with
     | Just (Tokens.ID (v & { Id = Key KeyWord.Try })) -> 
         pExprOpersThen ctx tks.Tail <| function
@@ -144,12 +145,12 @@ type internal pExprRet = (struct (PExpr * Tks)) Maybe
 
 type internal pExprRes = (struct (PExpr Maybe * Tks)) Maybe
 
-let internal pExprFinish (thenf: pExprRet -> pExprRet) e cr =
+let internal pExprFinish (thenf: pExprRet -> 'a) e cr =
     match e with
     | Nil -> thenf Nil
     | Just e -> thenf <| Just struct (e, cr)
 
-let internal pExpr (ctx: Ctx) (tks: Tks) (thenf: pExprRet -> pExprRet) = 
+let internal pExpr (ctx: Ctx) (tks: Tks) (thenf: pExprRet -> 'a) = 
     match pBool tks with
     | Just (e, cr) -> pExprFinish thenf e cr
     | Nil -> 
@@ -186,13 +187,13 @@ let internal pExpr (ctx: Ctx) (tks: Tks) (thenf: pExprRet -> pExprRet) =
 
 type internal PCExprOper = PCExpr of PExpr | PCOper of TOper
 
-type internal TCollectExprOpersThen = LinkedList<PCExprOper> -> LinkedList<struct (LinkedListNode<PCExprOper> * PExpr ref)> -> Tks -> pExprRet
+type internal TCollectExprOpersThen<'a> = LinkedList<PCExprOper> -> LinkedList<struct (LinkedListNode<PCExprOper> * PExpr ref)> -> Tks -> 'a
 
 /// 收集 运算符 和 表达式 成联合链表
 // tks -> (E | O) list
 // list 是 运算符 和 表达式 的联合链表
 // exprs 是 list 中表达式部分的节点的索引表
-let internal pCollectExprOpers (ctx: Ctx) (tks: Tks) (list: PCExprOper LinkedList) (exprs: struct (PCExprOper LinkedListNode * PExpr ref) LinkedList) (thenf: TCollectExprOpersThen) =
+let internal pCollectExprOpers (ctx: Ctx) (tks: Tks) (list: PCExprOper LinkedList) (exprs: struct (PCExprOper LinkedListNode * PExpr ref) LinkedList) (thenf: TCollectExprOpersThen<'a>) =
     pExpr ctx tks <| function
     | Just struct (e, cr) -> 
         let n = list.PushLast(PCExpr e)
@@ -359,9 +360,9 @@ and internal pExprOpersMidReduce (list: PCExprOper2 LinkedList) (node: PCExprOpe
     pExprOpersMid list node.Next
 
 /// 解析表达式和运算符，CPS 版本
-let internal pExprOpersThen (ctx: Ctx) (tks: Tks) (thenf: pExprRet -> pExprRet) = 
+let internal pExprOpersThen (ctx: Ctx) (tks: Tks) (thenf: pExprRet -> 'a) = 
     pCollectExprOpers ctx tks (LinkedList()) (LinkedList()) <| fun eos exprs cr ->
-        if eos.Count = 0 then Nil else
+        if eos.Count = 0 then thenf <| Nil else
         // 先处理边缘
         pExprOpersEdge eos exprs exprs.First
         // 清理
@@ -374,7 +375,41 @@ let internal pExprOpersThen (ctx: Ctx) (tks: Tks) (thenf: pExprRet -> pExprRet) 
 let internal pExprOpers (ctx: Ctx) (tks: Tks) = 
     pExprOpersThen ctx tks Operators.id
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
+let rec internal pBlockBody (ctx: Ctx) (tks: Tks) (exprs: PItem LinkedList) (thenf: PItem LinkedList -> 'a) =
+    if tks.IsEmpty then thenf exprs else
+    match tks.First with
+    | Just (Tokens.Split s) -> 
+        exprs.PushLast (Split s) |> ignore
+        pBlockBody ctx tks.Tail exprs thenf
+    | _ ->
+    pExprOpersThen ctx tks <| function 
+    | Just (e, tks) -> 
+        exprs.PushLast (Expr e) |> ignore
+        pBlockBody ctx tks exprs thenf
+    | Nil ->
+    ctx.Err(UnexpectedToken <| tks.GetUnchecked 0)
+    pBlockBody ctx tks.Tail exprs thenf
+
+let internal pExprBlock (ctx: Ctx) (block: TBlock) (thenf: PBlock -> 'a) =
+    let tks = block.Items.AsFlake()
+    let subCtx = ctx.Sub(endLocOf tks)
+    let Brackets = struct (block.Left, block.Right)
+    pBlockBody subCtx tks (LinkedList()) <| fun e -> 
+        thenf { Brackets = Brackets; Items = e }
+
+let internal pCodeBlock (ctx: Ctx) (tks: Tks) (thenf: struct (PCodeBlock * Tks) Maybe -> 'a) =
+    match tks.First with
+    | Just (Tokens.At at) ->
+        match tks.[1] with
+        | Just (Tokens.Block (b & { Type = BracketsType.Curly })) -> 
+            pExprBlock ctx b <| fun b -> 
+                // todo label and with
+                let block: PCodeBlock = { Label = Nil; At = at; Block = b; With = Nil }
+                thenf <| Just struct (block, tks.Slice(2))
+        | _ -> thenf Nil
+    | _ -> thenf Nil
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
