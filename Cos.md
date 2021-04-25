@@ -8,19 +8,55 @@
 
 ### 定义
 
+`let` 是不可变绑定  
+
 ```ts
-var a = 1;
-var b: int;
+let a = 1;
+let b: int;
 ```
+
+- 详细语法  
+  `let <定义模式> (:<类型>)? (= <表达式>)?`
 
 ### 修改
 
-```ts
-var mut a; // 声明可变
+`let mut` 或 `mut` 是可变绑定  
+
+使用 `alt` 语句来修改变量  
+`alt` 意思是 `alter`  
+
+```rust
+let mut a; // 声明可变
 mut a; // 或者直接 mut
-let a = 2;
-let a + 1;
+alt a = 2;
+alt a + 1; // 等于 alt a = a + 1
 ```
+
+- 使用修改语句的好处
+  - 语义明确，不会和表达式混起来
+    - 方便搜索定位，`=` 在搜索中和定义区分很困难
+  - 没有返回值，防止条件中使用 `=` 导致的低级错误
+  - 自我修改语法糖
+    ```ts
+    alt a + 1; // 类似 a++;
+    ```
+  - 没有返回值，避免 `++a` `a++` 的困扰
+  - 连续自我修改语法糖  
+    `=` 是不能连续的  
+    ```ts
+    alt a + 1 * 2 / 3
+    ```
+    等于
+    ```ts
+    alt a = a + 1
+    alt a = a * 2
+    alt a = a / 3
+    ```
+
+- 详细语法  
+  `alt <修改模式> = <表达式>`  
+  `alt <操作修改模式> (<修改操作符> <表达式>)+`  
+  `alt <表达式> do <修改函数调用>,+`  
 
 ## 控制流
 
@@ -65,8 +101,8 @@ case a {
 ### 块
 
 ```scala
-@{ }
-var a = @{ }
+@ { }
+let a = @ { }
 ```
 
 ### With
@@ -74,7 +110,7 @@ var a = @{ }
 with 可以在同级作用域下尾随语句或尾随块  
 
 ```scala
-@{ } with { }
+@ { } with { }
 ```
 
 ### 循环
@@ -91,10 +127,10 @@ while do true { } // 等于 c 系的 do while
 #### 使用 with 模拟三元 for
 
 ```scala
-@{ mut a = 1 } with
+@ { mut a = 1 } with
 while a < len { 
 
-} with { let a + 1 }
+} with { alt a + 1 }
 ```
 
 ### Break Continue Return Goto
@@ -111,16 +147,16 @@ return a;
 带标签情况
 
 ```kotlin
-l@{
+l@ {
   break@l;
 }
-l@while true { 
+l@ while true { 
   continue@l;
 }
-l@fn some() {
+l@ fn some() {
   return@l;
 }
-l@{
+l@ {
   goto@l;
 }
 ```
@@ -132,41 +168,7 @@ l@;
 goto@l;
 ```
 
-#### 裸三元 for 实现
-
-```kotlin
-block@{ 
-  mut a = 1;
-  cond@{
-    if a < len else break@block;
-  }
-  body@{
-    goto@inc; // continue
-    break@block; // break
-    inc@{
-      let a + 1;
-    }
-  }
-  goto@cond;
-}
-```
-
-##### C 语言版
-
-```c#
-  int a = 1;
-cond:
-  if (!(a < len)) goto end;
-body:
-  goto inc; // continue
-  goto end; // break
-inc:
-  a++;
-  goto cond;
-end:;
-```
-
-### Try Throw Catch Finally
+### Try Throw Catch Defer
 
 含有 `throw` 的函数必须使用 `throws` 标注  
 调用含有 `throw` 的函数必须使用 `try`  
@@ -176,7 +178,7 @@ fn some() throws { throw a }
 try some();
 ```
 
-在 try 同级块内任何位置使用 catch
+在 `try` 同级块内任何位置使用 `catch`
 
 ```scala
 try some();
@@ -186,19 +188,38 @@ catch e { }
 catch { }
 ```
 
-在任意块内使用 finally， finally 块将按倒序在主体块结束后顺序执行  
+在任意块内使用 `defer`， `defer` 块将按倒序在主体块结束后顺序执行  
+`defer` 类似别的语言的 `finally`  
 
-```c#
-finally { }
+```swift
+defer { }
 ```
 
-#### 使用 with 模拟其他语言的 try catch finally
+```swift
+defer { print(1) }
+defer { print(2) }
+defer { print(3) }
+// 输出 3、2、1
+```
 
-```scala
+#### 正常写法
+
+```swift
+fn foo() {
+  try some();
+  catch e { }
+  catch { }
+  defer { }
+}
+```
+
+#### 使用 `with` 模拟其他语言的 `try catch finally`
+
+```swift
 @{ try some() } 
 with catch e { }
 with catch { }
-with finally { }
+with defer { }
 ```
 
 ## 函数
@@ -220,26 +241,26 @@ add(1, 2);
 ### 类型
 
 ```ts
-var f: fn (a: int, int) -> int;
+let f: fn (a: int, int) -> int;
 ```
 
 ### 表达式
 
 ```ts
 // 函数表达式
-var f = fn (a: int, b: int) -> int { a + b };
-var f = fn (a, b) { a + b };
+let f = fn (a: int, b: int) -> int { a + b };
+let f = fn (a, b) { a + b };
 
 // 块函数表达式
-var f = fn { (a: int, b: int) -> int do a + b };
-var f = fn { (a, b) do a + b };
+let f = fn { (a: int, b: int) -> int do a + b };
+let f = fn { (a, b) do a + b };
 
 // 具名函数表达式
-var f = fn fib (n: int, a: int = 0, b: int = 1) { if n > 0 do fib(n - 1, b, a + b) else a };
-var f = fn { fib (n: int, a: int = 0, b: int = 1) do if n > 0 do fib(n - 1, b, a + b) else a };
+let f = fn fib (n: int, a: int = 0, b: int = 1) { if n > 0 do fib(n - 1, b, a + b) else a };
+let f = fn { fib (n: int, a: int = 0, b: int = 1) do if n > 0 do fib(n - 1, b, a + b) else a };
 
 // 单表达式函数
-var f = fn (a, b) do a + b;
+let f = fn (a, b) do a + b;
 ```
 
 ### 尾块函数
@@ -247,24 +268,57 @@ var f = fn (a, b) do a + b;
 跟在表达式后面的块是尾块函数，要求表达式的类型是输入一个函数的函数  
 
 ```js
-var a = foo { };
+let a = foo { };
 ```
 
 在诸如 `if` 的条件表达式等地方，要使用尾块函数必须包在 `()` 内  
 或者使用显式尾块语法  
 
 ```js
-var a = foo.{ };
+let a = foo.{ };
 ```
 
 ### 函数标注
 
-函数标注在大括号或者 do 前面，没有顺序要求
+函数标注在大括号或者 do 以及返回类型前面，没有顺序要求
 
 ```rust
 fn foo() inline {} // 内联语义
 fn bar() co {} // 延续语义
 fn baz() inline co {}
+fn ret() co -> int { 1 }
+
+// 类型上
+let t: fn () inline co -> int;
+```
+
+### 内联函数
+
+内联是语义的而不仅仅是优化  
+内联函数不保证与不加内联一样执行  
+
+内联函数的参数传入的函数默认也是内联的  
+可以使用 `noinline` 标注来表示传入函数不内联  
+
+可以使用 `refctx` 标注来表示传入函数是共享上下文的  
+具体如何共享还得看内联函数的内部实现  
+
+```rust
+fn fori[R](
+  init: fn () refctx, 
+  cond: fn () refctx, 
+  acc: fn () refctx -> bool, 
+  body: fn () refctx -> R,
+) inline {
+  @ { init() } with
+  while cond() { 
+    body()
+  } with { acc() }
+}
+
+fori({ mut i = 1 }, { i < 10 }, { alt i + 1 }) {
+  print(i);
+}
 ```
 
 ## 基础类型
@@ -272,40 +326,55 @@ fn baz() inline co {}
 ### 逻辑
 
 ```js
-var b: bool = true;
-var b = false;
+let b: bool = true;
+let b = false;
 ```
 
 ### 数字
 
 `half` 是 16 位浮点数  
 `float` 是 32 位浮点数  
-`num` 是 64 位浮点数  
+`num` | `double` 是 64 位浮点数  
+`decimal` 是 128 位浮点数  
+`bignum` 是任意精度数字  
 
 `byte` 是 8 位有符号整数  
-`narrow` 是 16 位有符号整数  
+`tiny` 是 16 位有符号整数  
 `short` 是 32 位有符号整数  
 `int` 是 64 位有符号整数  
+`long` 是 128 位有符号整数  
+`bigint` 是任意范围有符号整数  
 
 `ubyte` 是 8 位无符号整数  
-`unarrow` 是 16 位无符号整数  
+`utiny` 是 16 位无符号整数  
 `ushort` 是 32 位无符号整数  
 `uint` 是 64 位无符号整数  
+`ulong` 是 128 位无符号整数  
 
 ```js
-var i: int = 1;
-var n: num = 1.5;
+let i: int = 1;
+let n: num = 1.5;
 ```
+
+整数字面量支持任意范围  
+浮点字面量虽然也支持任意范围，  
+但必须具体为某一类型，默认为 `num`  
+
+所有整数其实都是整数字面量范围的类型别名  
+所以低范围的整数可以自然而然的转成高范围整数  
+
+高于 128 位的整数一般宿主都不会具有  
+所以所有高于 128 位的整数都是 `bigint`  
 
 ### 字符串
 
 `'` 和 `"` 等价
 
 ```js
-var s: str = 'asd';
-var s = "asd";
-var ts = 'asd  ${s}'
-var c = c'a'; // 前缀 c 是字符
+let s: str = 'asd';
+let s = "asd";
+let ts = 'asd  ${s}'
+let c = c'a'; // 前缀 c 是字符
 ```
 
 字符串具体编码同宿主字符串编码  
@@ -317,24 +386,24 @@ var c = c'a'; // 前缀 c 是字符
 对象字面量不能直接作为返回值，需要包在 () 内 或者使用 return  
 
 ```js
-var o: { a: int, b: int } = {
+let o: { a: int, b: int } = {
   a = 1,
   b = 2,
 };
-var o: obj = o;
+let o: obj = o;
 ```
 
 ### 数组
 
 ```js
-var a: [int] = [1, 2, 3];
-var a: [int; 3] = [1, 2, 3]; // 定长数组
+let a: [int] = [1, 2, 3];
+let a: [int; 3] = [1, 2, 3]; // 定长数组
 ```
 
 ### 元祖
 
 ```js
-var t: (int, bool, str) = (1, true, 'asd');
+let t: (int, bool, str) = (1, true, 'asd');
 ```
 
 ### 单元类型
@@ -342,7 +411,7 @@ var t: (int, bool, str) = (1, true, 'asd');
 单元类型，类型和值都是自己
 
 ```js
-var u: () = ();
+let u: () = ();
 ```
 
 ### 顶类型
@@ -350,7 +419,7 @@ var u: () = ();
 顶类型，可以放入任何值
 
 ```js
-var a: any;
+let a: any;
 ```
 
 ### 底类型
@@ -358,13 +427,13 @@ var a: any;
 底类型，没有值
 
 ```js
-var n: !;
+let n: !;
 ```
 
 ### 范围
 
 ```ts
-var a: int..int = 1..5;
+let a: int..int = 1..5;
 def Range[T] = T..T;
 ```
 
@@ -373,7 +442,7 @@ def Range[T] = T..T;
 逻辑，数字，字符串，字符 都能取部分成员作为字面量类型  
 
 ```ts
-var a: 1 = 1;
+let a: 1 = 1;
 ```
 
 ### 约束范围
@@ -382,10 +451,10 @@ var a: 1 = 1;
 只有范围和元组可以作为 `in` 的目标  
 
 ```ts
-var a: in 1..10 = 5;
+let a: in 1..10 = 5;
 def int = in -9223372036854775808..9223372036854775807;
-var c: in c'a'..c'z' = c'f';
-var t: in (1, 2, 3, 4, 5) = 3; // 等于 1 | 2 | 3 | 4 | 5
+let c: in c'a'..c'z' = c'f';
+let t: in (1, 2, 3, 4, 5) = 3; // 等于 1 | 2 | 3 | 4 | 5
 ```
 
 ### 或类型
@@ -393,7 +462,7 @@ var t: in (1, 2, 3, 4, 5) = 3; // 等于 1 | 2 | 3 | 4 | 5
 实际是 和（sum）类型
 
 ```ts
-var a: 1 | 2 = 1;
+let a: 1 | 2 = 1;
 ```
 
 ### 与类型
@@ -401,15 +470,15 @@ var a: 1 | 2 = 1;
 实际是 积（product）类型
 
 ```ts
-var a: { a: 1 } & { b: 2 } = { a = 1, b = 2 };
+let a: { a: 1 } & { b: 2 } = { a = 1, b = 2 };
 ```
 
 ### 可空类型
 
 ```js
-var n: ?T = ();
-var n: ?int = 1;
-var n: ??int = 1; // 多层自动铺平
+let n: ?T = ();
+let n: ?int = 1;
+let n: ??int = 1; // 多层自动铺平
 
 def ?[T] = T | (); // 伪代码
 ```
@@ -417,12 +486,12 @@ def ?[T] = T | (); // 伪代码
 ### 可选类型
 
 ```ts
-var o: T? = none;
-var o: int? = some(1);
-var o: int? = 1; // 隐式转换
-var o: int?? = some(1); // 不存在多层隐式转换
+let o: T? = none;
+let o: int? = some(1);
+let o: int? = 1; // 隐式转换
+let o: int?? = some(1); // 不存在多层隐式转换
 
-def optional[T] enum {
+enum optional[T] {
   none, some(T)
 }
 ```
@@ -435,7 +504,7 @@ def optional[T] enum {
 
 ```ts
 const a: int = 1 + 1;
-fn foo(a: int, b: int) -> int const do a * b;
+fn foo(a: int, b: int) const -> int do a * b;
 const b: int = foo(3, 5);
 ```
 
@@ -454,17 +523,21 @@ def Foo = Bar;
 
 ### 结构定义
 
-```scala
-def Foo data {
+```rust
+class Foo {
   mut a: int;
   
-  // Me 既是一个类型指向自己，也可以用于定义构造函数
-  fn Me(a: int) { 
-    let me.a = a;
+  // Self 既是一个类型指向自己，也可以用于定义构造函数
+  fn Self(a: int) { 
+    alt self.a = a;
   }
 
-  fn Me.foo() { // 具名构造函数
-    let me.a = 1;
+  fn Self.foo() { // 具名构造函数
+    alt a = 1;
+  }
+
+  fn Self.bar() {
+    { a = 1 } // 对象构造语法
   }
 
   fn add(b: int) -> int {
@@ -473,7 +546,7 @@ def Foo data {
 
   fn val() -> int { a }
 }
-var a: Foo = Foo(1);
+let a: Foo = Foo(1);
 a.add(2); // 3
 
 a.val; // 1, 没有参数的函数可以省略括号
@@ -485,27 +558,27 @@ a.val; // 1, 没有参数的函数可以省略括号
 也可以手动声明同名模块  
 同个模块内的同名的定义会按顺序合并  
  
- ```scala
- def Foo data {
-   static var a: int = 1;
- }
- module Foo {
-   fn get_a() -> int do a;
- }
- ```
+```ts
+class Foo {
+  static let a: int = 1;
+}
+module Foo {
+  fn get_a() -> int do a;
+}
+```
 
 ### 接口定义
 
 使用结构类型，无需显式标志实现接口
 
-```scala
-def Foo kind {
-  var a: int;
+```rust
+trait Foo {
+  let a: int;
   fn add(b: int) -> int;
 }
 
-def Bar data(a: int) : Foo {
-  var a: int = a;
+class Bar(a: int) : Foo {
+  let a: int = a;
   fn add(b: int) -> int { a + b }
 }
 ```
@@ -517,21 +590,21 @@ def Bar data(a: int) : Foo {
 
 #### 关联类型
 
-要求实现 Foo 的目标具有名为 Bar 的子成员  
+要求实现 Foo 的目标具有名为 Bar 的子定义成员  
 
 ```scala
-def Foo kind {
+trait Foo {
   def Bar need;
 }
 ```
 
 ### 枚举定义
 
-```scala
-def Foo enum {
+```rust
+enum Foo {
   A, B, C
 }
-def Bar enum {
+enum Bar {
   A(int),
   B { a: int };
   
@@ -539,33 +612,33 @@ def Bar enum {
 }
 ```
 
-```scala
-def bool enum {
+```rust
+enum bool {
   true, false
 }
-type a = true; // 枚举的成员可以作为字面量类型独立存在  
+def a = true; // 枚举的成员可以作为字面量类型独立存在  
 ```
 
 ## 泛型
 
-```scala
+```rust
 fn id[T](v: T) -> T { v }
 
-def Functor[F: for[_]] kind {
+trait Functor[F: for[_]] {
   fn map[T, R](a: F[T], f: fn (T) -> R) -> F[R];
 }
 
-def Functor[T] kind : for[T] {
-  fn map[R](f: fn (T) -> R) -> Me[R];
+trait Functor[T] : for[T] {
+  fn map[R](f: fn (T) -> R) -> Self[R];
 }
 
-def Option[T] enum {
+enum Option[T] {
   Some(T),
   None,
 }
 
 // 外置约束
-def Foo[T] where T : bool {
+trait Foo[T] where T : bool {
 }
 ```
 
@@ -590,11 +663,15 @@ module foo: bar { }
 
 ### 导入
 
+导入的第一个名称为包名  
+
 ```js
 import a.b.c; // 导入模块内所有内容
 import a.b.c as foo; // 创建一个模块别名
 import a.b.c of { Foo, bar as Bar }; // 从模块中导入部分内容
-import _.a.b.c; // 开头为 _ 表示当前根目录
+import _.a.b.c; // 开头为 _ 表示当前包的根模块
+import !.a.b.c; // ! 表示当前模块
+import !!.a.b.c; // !! 表示上级模块
 ```
 
 ### 导出
@@ -607,13 +684,15 @@ import _.a.b.c; // 开头为 _ 表示当前根目录
 export a.b.c; // 重新导出模块内所有内容
 export a.b.c as foo; // 将目标模块以 foo 为名字的子模块导出
 export a.b.c of { Foo, bar as Bar }; // 导出模块内部分内容
-export _.a.b.c; // 开头为 _ 表示当前根目录
+export _.a.b.c; // 开头为 _ 表示当前包的根模块
+export !.a.b.c; // ! 表示当前模块
+export !!.a.b.c; // !! 表示上级模块
 ```
 
 使用 export 导出一个变量
 
 ```js
-export var a = 1;
+export let a = 1;
 ```
 
 ### 文件头
