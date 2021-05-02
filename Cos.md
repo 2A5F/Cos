@@ -56,35 +56,38 @@ alt a + 1; // 等于 alt a = a + 1
 - 详细语法  
   `alt <修改模式> = <表达式>`  
   `alt <操作修改模式> (<修改操作符> <表达式>)+`  
-  `alt <表达式> do <修改函数调用>,+`  
 
 ## 控制流
 
 ### If
 
-单表达式情况可以使用 `do` 标注  
-
 ```scala
+if (a) b
+if (a) b else c
+if (a) b else if (c) d
+if (a) { b }
+if (a) { b } else { c }
+if (a) { b } else if (c) { d }
+// 如果条件无括号，则必须后面必须是块而不是表达式
 if a { b }
 if a { b } else { c }
 if a { b } else if c { d }
-if a do b;
-if a do b else c;
 
-if a else { b }
+
+if (a) else b;
+if (a) else { b };
 if a else b;
-
-if a else do { b = 1 }; // else 也可以使用 do 标注为表达式
+if a else { b }
 ```
 
 ### Case
 
 平铺 case
 
-```haskell
+```js
 case a;
 of b { c }
-of d do e;
+of (d) e; // case 的 条件括号也和 if 一样
 else { f }
 ```
 
@@ -93,44 +96,48 @@ case 块
 ```haskell
 case a {
   of b { c }
-  of d do e;
+  of (d) e;
   else { f }
 }
 ```
 
 ### 块
 
-```scala
-@ { }
-let a = @ { }
+```js
+do { }
+let a = do { }
 ```
 
 ### With
 
 with 可以在同级作用域下尾随语句或尾随块  
 
-```scala
-@ { } with { }
+```js
+do { } with { }
 ```
 
 ### 循环
 
-```scala
+```js
 while true { } // 条件循环
+while (true) body; // 再括号中的条件循环
 for i in e { } // 迭代器循环
+for (i in e) body; // 再括号中的迭代器循环
+for (mut i = 0; i < len; alt i++) { } // 三元 for 循环，必须使用括号
 
 while true { } with { } // for with 尾随的作用域是每次循环结束后
 
-while do true { } // 等于 c 系的 do while
+do { } while true;
+do { } while true with { }
 ```
 
 #### 使用 with 模拟三元 for
 
-```scala
-@ { mut a = 1 } with
-while a < len { 
+```js
+do { mut i = 1 } with
+while i < len { 
 
-} with { alt a + 1 }
+} with { alt i++ }
 ```
 
 ### Break Continue Return Goto
@@ -141,22 +148,21 @@ break a;
 continue;
 return;
 return a;
-=> a; // 等价于 return，后面必须跟表达式
 ```
 
 带标签情况
 
 ```kotlin
-l@ {
+do@l {
   break@l;
 }
-l@ while true { 
+while@l true { 
   continue@l;
 }
-l@ fn some() {
+fun@l some() {
   return@l;
 }
-l@ {
+do@l {
   goto@l;
 }
 ```
@@ -164,7 +170,7 @@ l@ {
 裸标签  
 
 ```kotlin
-l@;
+@l;
 goto@l;
 ```
 
@@ -173,17 +179,17 @@ goto@l;
 含有 `throw` 的函数必须使用 `throws` 标注  
 调用含有 `throw` 的函数必须使用 `try`  
 
-```scala
-fn some() throws { throw a }
+```kotlin
+fun some() throws { throw a }
 try some();
 ```
 
 在 `try` 同级块内任何位置使用 `catch`
 
-```scala
+```kotlin
 try some();
 catch e : Foo { }
-catch e : Bar { }
+catch (e : Bar) body;
 catch e { }
 catch { }
 ```
@@ -205,7 +211,7 @@ defer { print(3) }
 #### 正常写法
 
 ```swift
-fn foo() {
+fun foo() {
   try some();
   catch e { }
   catch { }
@@ -216,7 +222,7 @@ fn foo() {
 #### 使用 `with` 模拟其他语言的 `try catch finally`
 
 ```swift
-@{ try some() } 
+do { try some() } 
 with catch e { }
 with catch { }
 with defer { }
@@ -226,9 +232,9 @@ with defer { }
 
 ### 定义
 
-```rust
-fn foo() {}
-fn add(a: int, b: int) -> int { a + b }
+```kotlin
+fun foo() {}
+fun add(a: int, b: int) -> int { a + b }
 ```
 
 ### 调用
@@ -241,26 +247,35 @@ add(1, 2);
 ### 类型
 
 ```ts
-let f: fn (a: int, int) -> int;
+let f: (a: int, int) -> int;
+let f: int -> int;
+let f: (a: int, b: int) -> (c: int) -> int;
+let f: int -> int -> int;
+// 加 fun 关键字时必须使用括号
+let f: fun (a: int, int) -> int;
 ```
 
 ### 表达式
 
 ```ts
 // 函数表达式
-let f = fn (a: int, b: int) -> int { a + b };
-let f = fn (a, b) { a + b };
+let f = fun (a: int, b: int) -> int { a + b };
+let f = fun (a, b) { a + b };
+
+let f = fun (a: int, b: int) -> int => a + b;
+let f = fun (a, b) => a + b;
 
 // 块函数表达式
-let f = fn { (a: int, b: int) -> int do a + b };
-let f = fn { (a, b) do a + b };
+let f = .{ (a: int, b: int) -> int => a + b };
+let f = .{ (a, b) => a + b };
 
 // 具名函数表达式
-let f = fn fib (n: int, a: int = 0, b: int = 1) { if n > 0 do fib(n - 1, b, a + b) else a };
-let f = fn { fib (n: int, a: int = 0, b: int = 1) do if n > 0 do fib(n - 1, b, a + b) else a };
-
-// 单表达式函数
-let f = fn (a, b) do a + b;
+let f = fun fib (n: int, a: int = 0, b: int = 1) { 
+    if (n > 0) fib(n - 1, b, a + b) else a 
+  };
+let f = .fun fib { (n: int, a: int = 0, b: int = 1) => 
+    if (n > 0) fib(n - 1, b, a + b) else a 
+  };
 ```
 
 ### 尾块函数
@@ -280,16 +295,16 @@ let a = foo.{ };
 
 ### 函数标注
 
-函数标注在大括号或者 do 以及返回类型前面，没有顺序要求
+函数标注在大括号或者 => 以及返回类型前面，没有顺序要求
 
 ```rust
-fn foo() inline {} // 内联语义
-fn bar() co {} // 延续语义
-fn baz() inline co {}
-fn ret() co -> int { 1 }
+fun foo() inline {} // 内联语义
+fun bar() co {} // 延续语义
+fun baz() inline co {}
+fun ret() co -> int { 1 }
 
-// 类型上
-let t: fn () inline co -> int;
+// 类型上使用时必须加 fun
+let t: fun () inline co -> int;
 ```
 
 ### 内联函数
@@ -303,20 +318,20 @@ let t: fn () inline co -> int;
 可以使用 `refctx` 标注来表示传入函数是共享上下文的  
 具体如何共享还得看内联函数的内部实现  
 
-```rust
-fn fori[R](
-  init: fn () refctx, 
-  cond: fn () refctx, 
-  acc: fn () refctx -> bool, 
-  body: fn () refctx -> R,
+```js
+fun fori[R](
+  init: fun () refctx, 
+  cond: fun () refctx, 
+  acc: fun () refctx -> bool, 
+  body: fun () refctx -> R,
 ) inline {
-  @ { init() } with
+  do { init() } with
   while cond() { 
     body()
   } with { acc() }
 }
 
-fori({ mut i = 1 }, { i < 10 }, { alt i + 1 }) {
+fori(.{ mut i = 1 }, .{ i < 10 }, .{ alt i + 1 }) {
   print(i);
 }
 ```
@@ -383,11 +398,9 @@ let c = c'a'; // 前缀 c 是字符
 
 ### 对象
 
-对象字面量不能直接作为返回值，需要包在 () 内 或者使用 return  
-
 ```js
 let o: { a: int, b: int } = {
-  a = 1,
+  a = 1; // 对象里用 ; 和 , 都可以
   b = 2,
 };
 let o: obj = o;
@@ -434,7 +447,7 @@ let n: !;
 
 ```ts
 let a: int..int = 1..5;
-def Range[T] = T..T;
+type Range[T] = T..T;
 ```
 
 ### 字面量类型
@@ -452,7 +465,7 @@ let a: 1 = 1;
 
 ```ts
 let a: in 1..10 = 5;
-def int = in -9223372036854775808..9223372036854775807;
+type int = in -9223372036854775808..9223372036854775807;
 let c: in c'a'..c'z' = c'f';
 let t: in (1, 2, 3, 4, 5) = 3; // 等于 1 | 2 | 3 | 4 | 5
 ```
@@ -475,12 +488,12 @@ let a: { a: 1 } & { b: 2 } = { a = 1, b = 2 };
 
 ### 可空类型
 
-```js
+```ts
 let n: ?T = ();
 let n: ?int = 1;
 let n: ??int = 1; // 多层自动铺平
 
-def ?[T] = T | (); // 伪代码
+type ?[T] = T | (); // 伪代码
 ```
 
 ### 可选类型
@@ -491,7 +504,7 @@ let o: int? = some(1);
 let o: int? = 1; // 隐式转换
 let o: int?? = some(1); // 不存在多层隐式转换
 
-enum optional[T] {
+enum maybe[T] {
   none, some(T)
 }
 ```
@@ -504,7 +517,7 @@ enum optional[T] {
 
 ```ts
 const a: int = 1 + 1;
-fn foo(a: int, b: int) const -> int do a * b;
+fun foo(a: int, b: int) const -> int => a * b;
 const b: int = foo(3, 5);
 ```
 
@@ -513,38 +526,38 @@ const b: int = foo(3, 5);
 ### 别名定义
 
 ```scala
-def Foo = {
-  a: int,
-  b: num,
+type Foo = {
+  a: int;
+  b: num;
 };
 
-def Foo = Bar;
+type Foo = Bar;
 ```
 
 ### 结构定义
 
-```rust
+```ocaml
 class Foo {
   mut a: int;
   
   // Self 既是一个类型指向自己，也可以用于定义构造函数
-  fn Self(a: int) { 
+  fun Self(a: int) { 
     alt self.a = a;
   }
 
-  fn Self.foo() { // 具名构造函数
+  fun Self.foo() { // 具名构造函数
     alt a = 1;
   }
 
-  fn Self.bar() {
+  fun Self.bar() {
     { a = 1 } // 对象构造语法
   }
 
-  fn add(b: int) -> int {
+  fun add(b: int) -> int {
     a + b
   }
 
-  fn val() -> int { a }
+  fun val() -> int { a }
 }
 let a: Foo = Foo(1);
 a.add(2); // 3
@@ -563,23 +576,23 @@ class Foo {
   static let a: int = 1;
 }
 module Foo {
-  fn get_a() -> int do a;
+  fun get_a() -> int => a;
 }
 ```
 
 ### 接口定义
 
-使用结构类型，无需显式标志实现接口
+使用结构化类型，无需显式标志实现接口
 
 ```rust
 trait Foo {
   let a: int;
-  fn add(b: int) -> int;
+  fun add(b: int) -> int;
 }
 
 class Bar(a: int) : Foo {
   let a: int = a;
-  fn add(b: int) -> int { a + b }
+  fun add(b: int) -> int { a + b }
 }
 ```
 
@@ -592,9 +605,9 @@ class Bar(a: int) : Foo {
 
 要求实现 Foo 的目标具有名为 Bar 的子定义成员  
 
-```scala
+```rust
 trait Foo {
-  def Bar need;
+  type Bar;
 }
 ```
 
@@ -608,7 +621,7 @@ enum Bar {
   A(int),
   B { a: int };
   
-  fn some() {}
+  fun some() {}
 }
 ```
 
@@ -616,20 +629,22 @@ enum Bar {
 enum bool {
   true, false
 }
-def a = true; // 枚举的成员可以作为字面量类型独立存在  
+type a = true; // 枚举的成员可以作为字面量类型独立存在  
 ```
 
 ## 泛型
 
 ```rust
-fn id[T](v: T) -> T { v }
+fun id[T](v: T) -> T { v }
+
+fun id(v: `T) -> `T { v } // 可以使用 ` 省略泛型参数
 
 trait Functor[F: for[_]] {
-  fn map[T, R](a: F[T], f: fn (T) -> R) -> F[R];
+  fun map[T, R](a: F[T], f: T -> R) -> F[R];
 }
 
 trait Functor[T] : for[T] {
-  fn map[R](f: fn (T) -> R) -> Self[R];
+  fun map[R](f: T -> R) -> Self[R];
 }
 
 enum Option[T] {
