@@ -702,7 +702,7 @@ module foo: bar { }
 ```js
 import a.b.c; // 导入模块内所有内容
 import a.b.c as foo; // 创建一个模块别名
-import a.b.c of { Foo, bar as Bar }; // 从模块中导入部分内容
+import a.b.c of { Foo, bar as Bar }; // 从模块中导入部分内容，括号内 , ; 都可以使用
 import _.a.b.c; // 开头为 _ 表示当前包的根模块
 import !.a.b.c; // ! 表示当前模块
 import !!.a.b.c; // !! 表示上级模块
@@ -717,7 +717,7 @@ import !!.a.b.c; // !! 表示上级模块
 ```js
 export a.b.c; // 重新导出模块内所有内容
 export a.b.c as foo; // 将目标模块以 foo 为名字的子模块导出
-export a.b.c of { Foo, bar as Bar }; // 导出模块内部分内容
+export a.b.c of { Foo, bar as Bar }; // 导出模块内部分内容，括号内 , ; 都可以使用
 export _.a.b.c; // 开头为 _ 表示当前包的根模块
 export !.a.b.c; // ! 表示当前模块
 export !!.a.b.c; // !! 表示上级模块
@@ -727,6 +727,24 @@ export !!.a.b.c; // !! 表示上级模块
 
 ```js
 export let a = 1;
+```
+
+### 分布模块
+
+可以把模块的实现分布再多个文件  
+
+模块的主文件必须再文件头内写明子文件  
+子文件必须写明所属哪个模块  
+子文件的加载顺序由主文件决定  
+主文件永远比子文件早加载  
+
+```ts
+// a.cos
+module of { // 括号内 , ; 都可以使用
+  b;
+}
+// b.cos 
+module of a;
 ```
 
 ### 文件头
