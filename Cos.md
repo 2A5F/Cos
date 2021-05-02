@@ -738,6 +738,9 @@ export let a = 1;
 子文件的加载顺序由主文件决定  
 主文件永远比子文件早加载  
 
+`module of` 和 `module : SomeTrait` 必须是2条语句  
+并且只有主模块内能声明模块实现接口  
+
 ```ts
 // a.cos
 module of { // 括号内 , ; 都可以使用
