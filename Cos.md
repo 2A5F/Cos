@@ -676,6 +676,205 @@ def a: int -> int;
 fun a(v) => v + 1;
 ```
 
+## 模式匹配
+
+### is 表达式
+
+`<表达式> is <模式>`
+
+`is` 表达式将返回模式是否匹配  
+
+```csharp
+if a is 1 { }
+```
+
+### if let 模式
+
+`let` 和 `mut` 可以在 `if` 的条件中存在  
+在 `if` 的条件中时将判断模式是否匹配  
+
+```rust
+if let 1 = a { }
+if mut 1 = a { }
+```
+
+### mut 模式
+
+`mut` 也可以认为是一种模式  
+
+```rust
+let mut a = 1;
+```
+
+### 通用模式
+
+`case` 中的模式同 `is` 的  
+
+- 绑定模式
+
+  ```rust
+  let a = 1; // let 中的绑定模式
+  alt a = 1; // alt 中的绑定模式
+  1 is let a; // is 中的绑定模式
+  1 is mut a; // 可变绑定
+  1 is let mut a; // 可变绑定
+  if let a = 1 { } // if let 中的绑定模式
+  ```
+
+- 丢弃模式
+
+  下划线表示丢弃  
+  在 `case` 中也可以用来表示 `else` 
+
+  ```rust
+  let _ = 1;
+  1 is _;
+  if let _ = 1 { }
+  ```
+
+- 常量模式
+
+  所有字面量都可以作为常量模式的目标  
+
+  ```typescript
+  let 1 = 1; // let 中的常量模式
+  1 is 1; // is 中的常量模式
+  if let 1 = 1 { } // if let 中的常量模式
+  ```
+
+- 类型模式
+
+  ```typescript
+  let a: int = 1; // let 中的类型模式
+  1 is int; // is 中的直接类型模式
+  1 is let a: int; // is 中的类型模式
+  if let a: int = 1 { } // if let 中的类型模式
+
+  let is int = 1; // 只匹配类型不进行绑定
+  if let is int = 1 { }
+  ```
+
+- 解构模式
+
+  - 元组
+
+  ```typescript
+  let (a, b) = (1, 2); // let 中的元组模式
+  let (mut a, let b) = (1, 2); // 元组模式的内容也是模式
+  let (mut a, b) = (1, 2);
+  let (is int, b) = (1, 2); // let 中的元组模式
+  (1, 2) is let (a, b); // is 中的元组模式
+  (1, 2) is (mut a, let b); 
+  (1, 2) is (int, let b);
+  (1, 2) is let (is int, b);
+  if let (a, b) = (1, 2); // if let 完全同 let
+  ```
+
+  - 数组
+  ```typescript
+  let [a, b] = [1, 2];
+  let [mut a, b] = [1, 2];
+  [1, 2] is let [a, b];
+  if let [a, b] = [1, 2];
+  ```
+
+  - 对象
+  ```typescript
+  let { a, b } = { a = 1, b = 2 };
+  let { mut a, b } = { a = 1, b = 2 };
+  let { a is int } = { a = 1 };
+  let { a = (a, b) } = { a = (1, 2) };
+  { a = 1, b = 2 } is let { a, b };
+  { a = 1, b = 2 } is { mut a, let b };
+  { a = 1 } is { a: int };
+  { a = (1, 2) } is { a = (1, 2) };
+  { a = (1, 2) } is { a = let (a, b) };
+  if let { a, b } = { a = 1, b = 2 }; // if let 完全同 let
+  ```
+
+  - 剩余模式
+
+  三个点后跟一个模式  
+
+  ```typescript
+  let (a, ...b) = (1, 2, 3); // b 是 (2, 3)
+  let [a, ...b] = [1, 2, 3]; // b 是 [2, 3]
+  let { a, ...b } = { a = 1, b = 2, c = 3 }; // b 是 { b = 2, c = 3 }
+  ```
+
+  - 剩余丢弃模式
+
+  两个点
+
+  ```typescript
+  let (a, ..) = (1, 2, 3);
+  let [a, ..] = [1, 2, 3];
+  let { a, .. } = { a = 1, b = 2, c = 3 };
+  ```
+
+- 枚举模式
+
+  无参数枚举同字面量或类型模式  
+  枚举的括号同元组或对象模式  
+
+  ```typescript
+  let some(a) = some(1);
+  some(1) is let some(a);
+  some(1) is some(let a);
+  ```
+
+- as 模式
+
+  `as` 模式将模式匹配绑定到一个别名  
+
+  ```typescript
+  let (1, 2) as t = (1, 2);
+  let (1, 2) as mut t = (1, 2);
+  (1, 2) is (1, 2) as t;
+  (1, 2) is (1, 2) as mut t;
+  ```
+
+- 比较模式
+
+  `==` `!=` `>` `<` `<=` `<=` `!>` `!<`  
+  比较模式将和值比较  
+  直接使用简直就是毫无卵用  
+
+  ```typescript
+  let == 1 = 1;
+  1 is == 1;
+  if let == 1 = 1 { }
+
+  if let (_, > 0) = (1, 2) { }
+  ```
+
+- 或模式
+
+  定义时或模式的子模式中不能有 `:` 类型模式  
+
+  ```typescript
+  let 1 | 2 = 1;
+  1 is 1 | 2;
+  if let 1 | 2 = 1 { }
+  ```
+
+- 与模式
+
+  ```typescript
+  let 1 & a = 1;
+  1 is 1 & let a;
+  1 is let 1 & a;
+  if let 1 & a = 1 { }
+  ```
+
+- 括号模式
+
+  描述模式的优先级
+
+  ```typescript
+  let (1 | 2) & a = 1;
+  ```
+
 ## 模块
 
 一个文件就是一个模块
