@@ -2,7 +2,7 @@
 全称 `Configuration Script`  
 是嵌入式脚本语言  
 目标是可以嵌入多个不同的宿主语言  
-同时具有强大约束能力的类型系统，和极致简单的语法  
+同时具有强大约束能力的类型系统，和极致简单的语法，以及大量的语法糖  
 
 ### TODO
 
@@ -40,6 +40,7 @@ alt a + 1; // 等于 alt a = a + 1
 - 使用修改语句的好处
   - 语义明确，不会和表达式混起来
     - 方便搜索定位，`=` 在搜索中和定义区分很困难
+    - 可以很自然的在模式匹配中和定义区分开
   - 没有返回值，防止条件中使用 `=` 导致的低级错误
   - 自我修改语法糖
     ```ts
@@ -59,10 +60,9 @@ alt a + 1; // 等于 alt a = a + 1
     ```
 
 - 详细语法  
-  `alt <操作修改模式> = <表达式>`  
-  `alt <操作修改模式> (<修改操作符> <表达式>)+`  
-  `alt <操作修改模式> <一元修改操作符>`  
-  `alt <修改模式>`
+  `alt <修改模式> = <表达式>`  
+  `alt <位置> (<修改操作符> <表达式>)+`  
+  `alt <位置> <一元修改操作符>`  
 
 ## 控制流
 
@@ -243,6 +243,12 @@ with defer { }
 fun foo() {}
 fun add(a: int, b: int) -> int { a + b }
 ```
+
+- 详细语法  
+  `fun <函数名>(<函数参数>,*) <标注>* (-> <返回值>)? <函数体>`  
+
+  - 参数  
+    `<绑定模式> | , | ...<绑定模式>`
 
 ### 调用
 
@@ -501,6 +507,7 @@ let n: ?int = 1;
 let n: ??int = 1; // 多层自动铺平
 
 type ?[T] = T | (); // 伪代码
+type null = ();
 ```
 
 ### 可选类型
@@ -556,8 +563,8 @@ class Foo {
     alt a = 1;
   }
 
-  fun Self.bar() {
-    { a = 1 } // 对象构造语法
+  fun Self.bar() { // 构造函数的返回值只能是 () 或 Self
+    new { a = 1 } // 对象构造语法
   }
 
   fun add(b: int) -> int {
@@ -570,6 +577,13 @@ let a: Foo = Foo(1);
 a.add(2); // 3
 
 a.val; // 1, 没有参数的函数可以省略括号
+```
+
+#### 对象构造语法
+
+```typescript
+let a = Foo new { }
+let a: Foo = new { } // 类型明确时可以省略前面的类名
 ```
 
 #### 静态和定义合并
@@ -630,6 +644,8 @@ enum Bar {
   
   fun some() {}
 }
+
+let b = Bar.B new { a = 1 } // 枚举的对象成员也必须和类一样使用 new 初始  
 ```
 
 ```rust
@@ -706,6 +722,32 @@ if mut 1 = a { }
 let mut a = 1;
 ```
 
+### 修改和绑定子模式
+
+修改和绑定可以作为子模式
+
+```ts
+let (a, mut b) = (1, 1);
+let (alt b, c) = (2, 3);
+// (a, b, c) == (1, 2, 3)
+```
+
+修改和绑定模式可以无限嵌套  
+
+```ts
+alt let alt mut a = 1;
+let alt let alt a = 1;
+```
+
+### 位置模式
+
+只能在修改中使用  
+
+```ts
+alt a = 1; 
+alt a.b.c = 1;
+```
+
 ### 通用模式
 
 `case` 中的模式同 `is` 的  
@@ -714,7 +756,6 @@ let mut a = 1;
 
   ```rust
   let a = 1; // let 中的绑定模式
-  alt a = 1; // alt 中的绑定模式
   1 is let a; // is 中的绑定模式
   1 is mut a; // 可变绑定
   1 is let mut a; // 可变绑定
@@ -779,6 +820,7 @@ let mut a = 1;
   ```
 
   - 对象
+
   ```typescript
   let { a, b } = { a = 1, b = 2 };
   let { mut a, b } = { a = 1, b = 2 };
@@ -790,6 +832,16 @@ let mut a = 1;
   { a = (1, 2) } is { a = (1, 2) };
   { a = (1, 2) } is { a = let (a, b) };
   if let { a, b } = { a = 1, b = 2 }; // if let 完全同 let
+  ```
+
+  - 范围
+
+  ```typescript
+  let a..b = 1..2;
+  let mut a..mut b = 1..2;
+  let a.. = 1..;
+  let ..b = ..1;
+  let .. = ..;
   ```
 
   - 剩余模式
@@ -821,6 +873,14 @@ let mut a = 1;
   let some(a) = some(1);
   some(1) is let some(a);
   some(1) is some(let a);
+  ```
+
+- 类解构模式
+
+  和枚举模式是一回事，但是允许普通类名  
+
+  ```typescript
+  let Foo new { a } = Foo new { a = 1 };
   ```
 
 - as 模式
@@ -873,6 +933,33 @@ let mut a = 1;
 
   ```typescript
   let (1 | 2) & a = 1;
+  ```
+
+- in 模式
+
+  ```typescript
+  let in 1..100 = 1;
+  let in (1, 2, 3) = 1; // 等于 let 1 | 2 | 3 = 1;
+  ```
+
+- not 模式
+
+  不能再定义中使用  
+
+  ```typescript
+  1 is !2;
+  if let !2 = 1 { }
+  ```
+
+- if 模式
+
+  不能再定义中使用  
+  单独使用完全没有意义  
+  `if` 模式的条件中不能使用 `if let`  
+
+  ```typescript
+  1 is if true;
+  if let if true = 1 { }
   ```
 
 ## 模块
