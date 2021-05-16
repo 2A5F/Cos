@@ -5,8 +5,12 @@
 			"path": "."
 		},
 		{
-			"name": "Cos",
-			"path": "dotnet\\Cos"
+			"name": "dotnet",
+			"path": "dotnet"
+		},
+		{
+			"name": "javascript",
+			"path": "javascript"
 		}
 	],
 	"settings": {}
