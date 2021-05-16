@@ -26,35 +26,40 @@ type KeyWord =
 module KeyWords =
     [<AbstractClass; Sealed>]
     type private DoInit() =
-        static let keyWord2Strs i = 
+        static let makeKeyWords(i) = struct (FSharpValue.MakeUnion(i, [| |]) :?> KeyWord, i.Name)
+        static let keyWord2Strs struct (i: KeyWord, n) = 
             struct(i, 
-                match i with 
-                | TSelf -> "Self" 
-                | Underscore -> "_" 
-                | TryE -> "try!"
-                | TryQ -> "try?"
-                | _ -> match FSharpValue.GetUnionFields(i, typeof<KeyWord>) with | case, _ -> case.Name.ToLower() 
-            ) 
-        static let _strs: struct (KeyWord * string) [] = Enum.GetValues(typeof<KeyWord>).Cast<KeyWord>().Select(keyWord2Strs).ToArray()
-        static let _enumToStr: Dictionary<KeyWord, string> = Dictionary()
-        static let _strToEnum: Dictionary<string, KeyWord> = Dictionary()
-        static let _subStrToEnum: Dictionary<SubStr, KeyWord> = Dictionary()
+                match n with 
+                | "TSelf" -> "Self" 
+                | "Underscore" -> "_" 
+                | "TryE" -> "try!"
+                | "TryQ" -> "try?"
+                | _ -> n
+            )
+        static let _strs: struct (KeyWord * string) [] = 
+            FSharpType.GetUnionCases(typeof<KeyWord>)
+                .Select(makeKeyWords)
+                .Select(keyWord2Strs)
+                .ToArray()
+        static let _unionToStr: Dictionary<KeyWord, string> = Dictionary()
+        static let _strToUnion: Dictionary<string, KeyWord> = Dictionary()
+        static let _subStrToUnion: Dictionary<SubStr, KeyWord> = Dictionary()
         static let mutable len = 0
         static do
             for (e, s) in _strs do
                 if s.Length > len then len <- s.Length
-                _enumToStr.Add(e, s)
-                _strToEnum.Add(s, e)
-                _subStrToEnum.Add(s.ToSubStr, e)
+                _unionToStr.Add(e, s)
+                _strToUnion.Add(s, e)
+                _subStrToUnion.Add(s.ToSubStr, e)
         static member inline Strs = _strs
-        static member inline EnumToStr = _enumToStr
-        static member inline StrToEnum = _strToEnum
-        static member inline SubStrToEnum = _subStrToEnum
+        static member inline UnionToStr = _unionToStr
+        static member inline StrToUnion = _strToUnion
+        static member inline SubStrToUnion = _subStrToUnion
         static member inline MaxLen = len
     let Strs = DoInit.Strs
-    let EnumToStr = DoInit.EnumToStr
-    let StrToEnum = DoInit.StrToEnum
-    let SubStrToEnum = DoInit.SubStrToEnum
+    let UnionToStr = DoInit.UnionToStr
+    let StrToUnion = DoInit.StrToUnion
+    let SubStrToUnion = DoInit.SubStrToUnion
     let MaxLen = DoInit.MaxLen
 
     let idAllowed k =

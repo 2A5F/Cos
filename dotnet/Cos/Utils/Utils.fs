@@ -10,6 +10,8 @@ let inline notNull v = not <| isNull v
 
 let maybe = MaybeBuilder()
 
+let co = CoBuilder()
+
 type Dictionary<'K, 'V> with
     member self.TryGet k =
         let mutable v = Unchecked.defaultof<'V>

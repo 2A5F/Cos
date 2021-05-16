@@ -14,3 +14,5 @@ type ParserError =
 | IllegalAloneOperator of TOper
 | IllegalEdgeOperator of TOper
 | IllegalFloatingNumber of TNum * TOper * TNum
+| LetNeedPat of TId
+| LetEqNeedExpr of TId * TOper

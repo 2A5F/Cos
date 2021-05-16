@@ -18,19 +18,19 @@ type PAccess =
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-type PVar =
+type PLet =
     { TExport: TId Maybe
       Access: PAccess Maybe
-      TVar: TId
+      TLet: TId
       Pat: PPat
       Type: PTypeAnno Maybe
-      Val: PVarVal Maybe
-      Split: TSplit }
+      Val: PLetVal Maybe
+      Split: TSplit Maybe }
 
     override self.ToString() =
-        $"{self.TExport.TryToStrSR}{self.Access.TryToStrSR}var {self.Pat}{self.Type.TryToStr}{self.Val.TryToStrSL};"
+        $"{self.TExport.TryToStrSR}{self.Access.TryToStrSR}let {self.Pat}{self.Type.TryToStr}{self.Val.TryToStrSL};"
 
-type PVarVal =
+type PLetVal =
     { TEq: TOper
       Expr: PExpr }
 
@@ -44,7 +44,7 @@ type PTypeAnno =
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-type PLet =
+type PAlt =
     { TLet: TId
       Name: TId
       Opers: PLetOper []
@@ -52,7 +52,7 @@ type PLet =
 
     override self.ToString() =
         let opers = tryToStrMap self.Opers " " "" " "
-        $"let {self.Name}{opers};"
+        $"alt {self.Name}{opers};"
 
 type PLetOper =
     { Oper: TOper
@@ -376,7 +376,7 @@ type PParams =
 type PParamItem =
     { Name: TId
       Type: PTypeAnno Maybe
-      Val: PVarVal Maybe
+      Val: PLetVal Maybe
       Comma: TComma Maybe }
 
     override self.ToString() =
@@ -1286,7 +1286,7 @@ type PPat =
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 type PMember =
-    | Field of PVar
+    | Field of PLet
     | Method of PFn
     | Def of PDef
     | Export of PExport

@@ -101,7 +101,7 @@ let internal pContinue (tks: Tks) =
 
 let internal pReturnArrow (ctx: Ctx) (tks: Tks) (thenf: pExprRes -> 'a) =
     match tks.First with
-    | Just (Tokens.DArrow a) -> 
+    | Just (DArrow a) -> 
         let struct (labelUse, tks) = pLabelUse tks.Tail
         pExprOpersThen ctx tks <| function
         | Just struct (e, r) -> thenf <| Just struct (ReturnArrow <| { Arrow = a; Label = labelUse; Expr = e } |> Just, r)
@@ -129,11 +129,11 @@ let internal pTry (ctx: Ctx) (tks: Tks) (thenf: pExprRes -> 'a) =
         pExprOpersThen ctx tks.Tail <| function
         | Just struct (e, r) -> thenf <| Just struct (Try <| { TTry = v; Expr = e; Kind = PTryKind.PTryN } |> Just, r)
         | Nil -> thenf <| Nil
-    | Just (Tokens.ID (v & { Id = Key KeyWord.TryE })) -> 
+    | Just (Tokens.ID (v & { Id = Key TryE })) -> 
         pExprOpersThen ctx tks.Tail <| function
         | Just struct (e, r) -> thenf <| Just struct (Try <| { TTry = v; Expr = e; Kind = PTryKind.PTryE } |> Just, r)
         | Nil -> thenf <| Nil
-    | Just (Tokens.ID (v & { Id = Key KeyWord.TryQ })) -> 
+    | Just (Tokens.ID (v & { Id = Key TryQ })) -> 
         pExprOpersThen ctx tks.Tail <| function
         | Just struct (e, r) -> thenf <| Just struct (Try <| { TTry = v; Expr = e; Kind = PTryKind.PTryQ } |> Just, r)
         | Nil -> thenf <| Nil
@@ -374,6 +374,37 @@ let internal pExprOpersThen (ctx: Ctx) (tks: Tks) (thenf: pExprRet -> 'a) =
 /// 解析表达式和运算符
 let internal pExprOpers (ctx: Ctx) (tks: Tks) = 
     pExprOpersThen ctx tks Operators.id
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+let internal pPatternId (tks: Tks) =
+    match tks.First with
+    | Just (Tokens.ID v) when v.IsIdAllowed -> Just struct (PPat.Id v, tks.Tail)
+    | _ -> Nil
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+let internal pLet (ctx: Ctx) (tks: Tks) =
+    match tks.First with
+    | Just (Tokens.ID (tlet & { Id = Key KeyWord.Let })) ->
+        match pPatternId tks.Tail with
+        | Nil -> 
+            ctx.Err(LetNeedPat tlet)
+            Just (Nil, tks.Slice 2)
+        | Just (pat, tks) ->
+        match tks.First with
+        | Just (Tokens.Oper (eq & { Str = "=" })) -> 
+            pExpr ctx tks.Tail <| function
+            | Nil -> 
+                ctx.Err(LetEqNeedExpr (tlet, eq))
+                Just (Nil, tks.Slice 2)
+            | Just (exp, tks) ->
+                let r: PLet = { TExport = Nil; Access = Nil; TLet = tlet; Pat = pat; Type = Nil; Val = Just { TEq = eq; Expr = exp }; Split = Nil }
+                Just (Just r, tks)
+        | _ ->
+            let r: PLet = { TExport = Nil; Access = Nil; TLet = tlet; Pat = pat; Type = Nil; Val = Nil; Split = Nil }
+            Just (Just r, tks.Tail)
+    | _ -> Nil
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 

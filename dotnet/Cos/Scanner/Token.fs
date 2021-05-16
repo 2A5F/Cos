@@ -118,14 +118,14 @@ type TId =
 
     static member New(key: KeyWord, loc): TId = { Id = Key <| key; Loc = loc }
     static member New(str: SubStr, loc): TId =
-        match SubStrToEnum.TryGet str with
+        match SubStrToUnion.TryGet str with
         | Just k -> { Id = Key k; Loc = loc }
         | Nil -> { Id = ID <| System.String.Intern(str.ToString()); Loc = loc }
 
     override self.ToString() =
         match self.Id with
         | ID s -> s
-        | Key k -> KeyWords.EnumToStr.[k]
+        | Key k -> KeyWords.UnionToStr.[k]
 
     member inline self.Str = self.ToString()
 
